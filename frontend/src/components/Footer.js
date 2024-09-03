@@ -44,27 +44,27 @@ const Footer = () => {
           <ul className='flex flex-row flex-wrap space-x-4 mt-2'>
             <li>
               <a href="#" className="hover:opacity-80">
-                <img src="./facebook.png" alt="Facebook" className="w-6 h-6 inline"/>
+                <img src="/facebook.png" alt="Facebook" className="w-6 h-6 inline"/>
               </a>
             </li>
             <li>
               <a href="#" className="hover:opacity-80">
-                <img src="./instagram.png" alt="Instagram" className="w-6 h-6 inline"/>
+                <img src="/instagram.png" alt="Instagram" className="w-6 h-6 inline"/>
               </a>
             </li>
             <li>
               <a href="#" className="hover:opacity-80">
-                <img src="./twitter.png" alt="Twitter" className="w-6 h-6 inline"/>
+                <img src="/twitter.png" alt="Twitter" className="w-6 h-6 inline"/>
               </a>
             </li>
             <li>
               <a href="#" className="hover:opacity-80">
-                <img src="./youtube.png" alt="YouTube" className="w-6 h-6 inline"/>
+                <img src="/youtube.png" alt="YouTube" className="w-6 h-6 inline"/>
               </a>
             </li>
             <li>
               <a href="#" className="hover:opacity-80">
-                <img src="./linkedin.png" alt="LinkedIn" className="w-6 h-6 inline"/>
+                <img src="/linkedin.png" alt="LinkedIn" className="w-6 h-6 inline"/>
               </a>
             </li>
           </ul>
