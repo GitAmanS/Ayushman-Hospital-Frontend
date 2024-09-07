@@ -2,33 +2,57 @@ import React from 'react';
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaCartPlus } from "react-icons/fa";
 import { CiSearch } from "react-icons/ci";
-
+import { IoIosNotifications } from "react-icons/io";
+import { MdAccountCircle } from "react-icons/md";
 const Header = () => {
   return (
     <header className="bg-white text-black open-sans">
       <div className="container mx-auto flex flex-col  md:flex-row justify-between items-center p-2 border-b">
-        <h1 className="text-lg font-bold flex flex-col p-2 text-center md:text-left"> 
-            <span style={{ marginBottom: "-8px" }}>Ayushman</span>
-            <span>Hospital</span>
-            <div className="bg-sky-900 h-2"></div>
-        </h1>
 
-        <div className="flex items-center w-full max-w-lg md:max-w-xl bg-neutral-100 px-4 py-2 border border-gray-300 rounded-md text-sm font-semibold my-2 md:my-0 mx-auto md:mx-4">
-            <CiSearch className="text-gray-500 mr-2 text-xl" />
-            <input
-                type="text"
-                placeholder="Search for lab tests"
-                className="flex-grow bg-transparent outline-none"
-            />
+        <div className='flex flex-row items-center justify-between w-full md:w-auto'>
+            <h1 className="text-sm md:text-lg font-bold flex flex-col p-2 text-left"> 
+                <span className='mb-8 md:mb-1' style={{ marginBottom: "-4px" }}>Ayushman</span>
+                <span>Hospital</span>
+                <div className="bg-sky-900 h-2"></div>
+            </h1>
+
+            <div className="flex items-center justify-center px-4 md:px-8 md:mt-0 block md:hidden gap-x-6">
+                <FaCartPlus className="text-2xl" />
+
+            </div>
+
+            {/* <div className="flex items-center justify-center px-4 md:px-8 md:mt-0 block md:hidden gap-x-6">
+                <FaCartPlus className="text-xl" />
+                <IoIosNotifications className="text-xl" />
+                <MdAccountCircle className='text-xl'/>
+            </div> */}
         </div>
 
-        <div className="flex flex-row text-sm space-x-4 whitespace-nowrap">
+
+
+        <div className='w-full max-w-lg md:max-w-xl flex my-2 md:my-0 mx-auto md:mx-4'>
+            <div className="flex items-center w-full max-w-lg md:max-w-xl bg-neutral-100 px-4 py-2 border border-gray-300 rounded-l-md text-sm font-semibold ">
+                <CiSearch className="text-gray-500 mr-2 text-xl" />
+                <input
+                    type="text"
+                    placeholder="Search for lab tests"
+                    className="flex-grow bg-transparent outline-none"
+                />
+            </div>
+            <button className='px-4 bg-gray-200 hover:bg-gray-300 border-gray-300 rounded-r-md'>
+                <CiSearch className="text-gray-500 text-2xl" />
+            </button>
+
+        </div>
+
+
+        {/* <div className="flex flex-row text-sm space-x-4 whitespace-nowrap">
             <h1>Login</h1>
             <div className="border-l border-gray-300 h-6 mx-4"></div>
             <h1>Sign up</h1>
-        </div>
+        </div> */}
 
-        <div className="px-4 md:px-8 mt-2 md:mt-0">
+        <div className="px-4 md:px-8 md:mt-0 hidden md:block">
             <FaCartPlus className="text-2xl" />
         </div>
       </div>
