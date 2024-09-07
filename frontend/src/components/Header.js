@@ -4,6 +4,7 @@ import { FaCartPlus } from "react-icons/fa";
 import { CiSearch } from "react-icons/ci";
 import { IoIosNotifications } from "react-icons/io";
 import { MdAccountCircle } from "react-icons/md";
+import { MdOutlineAccountCircle } from "react-icons/md";
 const Header = () => {
   return (
     <header className="bg-white text-black open-sans">
@@ -16,8 +17,8 @@ const Header = () => {
                 <div className="bg-sky-900 h-2"></div>
             </h1>
 
-            <div className="flex items-center justify-center px-4 md:px-8 md:mt-0 block md:hidden gap-x-6">
-                <FaCartPlus className="text-2xl" />
+            <div className="flex items-center justify-center px-4 md:px-8 md:mt-0 block md:hidden ">
+                <MdOutlineAccountCircle className="text-3xl" />
 
             </div>
 
