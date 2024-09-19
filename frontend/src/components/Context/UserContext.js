@@ -37,6 +37,36 @@ export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(dummyUser);
   const [cartProducts, setCartProducts] = useState([]);
 
+  // Add an item to the cart or increase quantity
+  const addItemToCart = (productId) => {
+    const updatedCart = user.cart.map((item) =>
+      item.productId === productId
+        ? { ...item, quantity: item.quantity + 1 }
+        : item
+    );
+
+    // If product not found in cart, add it with quantity 1
+    const isProductInCart = user.cart.some((item) => item.productId === productId);
+    if (!isProductInCart) {
+      updatedCart.push({ productId, quantity: 1 });
+    }
+
+    setUser({ ...user, cart: updatedCart });
+  };
+
+  // Decrease item quantity or remove if quantity is 0
+  const decreaseItemQuantity = (productId) => {
+    const updatedCart = user.cart
+      .map((item) =>
+        item.productId === productId
+          ? { ...item, quantity: item.quantity - 1 }
+          : item
+      )
+      .filter((item) => item.quantity > 0); // Remove items with quantity 0
+
+    setUser({ ...user, cart: updatedCart });
+  };
+
   // Simulate login with dummy data
   const login = () => {
     setUser(dummyUser);
@@ -63,7 +93,6 @@ export const UserProvider = ({ children }) => {
         return { ...product, quantity: cartItem.quantity };
       });
       setCartProducts(productsInCart);
-      console.log("products fetched:", cartProducts)
     }
   };
 
@@ -84,7 +113,9 @@ export const UserProvider = ({ children }) => {
   }, [user]);
 
   return (
-    <UserContext.Provider value={{ user, login, logout, checkAuth, cartProducts }}>
+    <UserContext.Provider
+      value={{ user, login, logout, checkAuth, cartProducts, addItemToCart, decreaseItemQuantity }}
+    >
       {children}
     </UserContext.Provider>
   );
