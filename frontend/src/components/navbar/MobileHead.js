@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { UilShoppingBag } from '@iconscout/react-unicons'
 import { useLocation, useNavigate } from 'react-router-dom';
 import BackButton from '../buttons/BackButton';
 import { SolarCart4BoldDuotone } from '../icons/SolarCart4BoldDuotone';
+import { UserContext } from '../Context/UserContext';
 
 const MobileHeader = () => {
   const [isScrollingUp, setIsScrollingUp] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation()
+  const { cartProducts } = useContext(UserContext);
   const goToCartPage = () => {
     navigate('/cart');
   };
@@ -47,9 +49,21 @@ const MobileHeader = () => {
       </h1>):(
         <BackButton/>
       )}
-        <button onClick={goToCartPage} className="bg-gray-100 my-1 text-xs rounded-full p-2.5">
-          <SolarCart4BoldDuotone className="w-5 h-5"/>
+      <div className="relative inline-block">
+        <button
+          onClick={goToCartPage}
+          className="bg-gray-100 my-1 text-xs rounded-full p-2.5 relative"
+        >
+          <SolarCart4BoldDuotone className="w-5 h-5" />
         </button>
+
+        {/* Badge */}
+        {cartProducts.length > 0 && (
+          <span className="absolute top-2 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
+            {cartProducts.length}
+          </span>
+        )}
+      </div>
       </div>
 
 

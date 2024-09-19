@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import itemsData from './items.json'; // Adjust the path as needed
+import { UserContext } from './Context/UserContext';
 
 const CategoryProducts = () => {
   const { categoryName } = useParams(); // Get the category name from the URL
-
+  const { cartProducts, addItemToCart } = useContext(UserContext);
   // Find the category based on the categoryName
   const category = itemsData.categories.find(cat => cat.category === categoryName);
 
@@ -27,7 +28,7 @@ const CategoryProducts = () => {
             </div>
             <div className='flex pt-4 items-end justify-center'>
                 <h1 className='font-bold mr-auto'>₹{product.price}</h1>
-                <button className='flex text-sm justify-center items-center rounded-lg border text-semibold ml-auto text-red-500 shadow-b-md p-3'>
+                <button onClick={()=>{addItemToCart(product.product_id)}} className='flex text-sm justify-center items-center rounded-lg border text-semibold ml-auto text-red-500 shadow-b-md p-3'>
                     ADD TO CART
                 </button>
             </div>
