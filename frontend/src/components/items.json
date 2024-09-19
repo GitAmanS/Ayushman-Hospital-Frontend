@@ -1,0 +1,76 @@
+{
+  "categories": [
+    {
+      "category": "ECG",
+      "image": "./cat1.png",
+      "products": [
+        {
+          "product_id": 1,
+          "title": "Resting ECG",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "15 hours",
+          "contains_tests": 10,
+          "price": 2599
+        },
+        {
+          "product_id": 2,
+          "title": "Stress ECG",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "12 hours",
+          "contains_tests": 8,
+          "price": 2599
+        }
+      ]
+    },
+    {
+      "category": "X-Ray",
+      "image": "cat2.png",
+      "products": [
+        {
+          "product_id": 3,
+          "title": "Chest X-Ray",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "10 hours",
+          "contains_tests": 1,
+          "price": 2599
+        },
+        {
+          "product_id": 4,
+          "title": "Abdominal X-Ray",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "14 hours",
+          "contains_tests": 1,
+          "price": 2599
+        }
+      ]
+    },
+    {
+      "category": "Pathology",
+      "image": "cat3.png",
+      "products": [
+        {
+          "product_id": 5,
+          "title": "Blood Test",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "5 hours",
+          "contains_tests": 20,
+          "price": 2599
+        },
+        {
+          "product_id": 6,
+          "title": "Urine Test",
+          "desc":"This is the product descriptioin...",
+          "image": "/prod1banner.png",
+          "reports_within": "7 hours",
+          "contains_tests": 12,
+          "price": 2599
+        }
+      ]
+    }
+  ]
+}

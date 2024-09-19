@@ -2,8 +2,8 @@ import React from 'react';
 
 const Footer = () => {
   return (
-    <footer className="bg-stone-50 text-black mt-14">
-      <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mx-8 justify-center py-12 gap-4'>
+    <footer className="bg-stone-50 text-black pb-4 mt-14">
+      <div className='grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 mx-8 justify-center py-12 gap-4'>
         <div className='px-4'>
           <h1 className='py-4 font-bold'>Know Us</h1>
           <ul className='text-xs text-stone-600 space-y-1'>
@@ -57,21 +57,12 @@ const Footer = () => {
                 <img src="/twitter.png" alt="Twitter" className="w-6 h-6 inline"/>
               </a>
             </li>
-            <li>
-              <a href="#" className="hover:opacity-80">
-                <img src="/youtube.png" alt="YouTube" className="w-6 h-6 inline"/>
-              </a>
-            </li>
-            <li>
-              <a href="#" className="hover:opacity-80">
-                <img src="/linkedin.png" alt="LinkedIn" className="w-6 h-6 inline"/>
-              </a>
-            </li>
+
           </ul>
         </div>
       </div>
 
-      <div className='flex items-center justify-center py-8 text-sm text-center font-bold text-gray-400 border-t'>
+      <div className='flex items-center justify-center py-8 text-xs text-center font-bold text-gray-400 border-t'>
         <h1>
           © 2024 Ayushman Hospital. All rights reserved. All medicines are dispensed in compliance with the Drugs and Cosmetics Act, 1940 and Drugs and Cosmetics Rules, 1945. We do not process requests for Schedule X and habit forming drugs.
         </h1>
