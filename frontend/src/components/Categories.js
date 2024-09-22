@@ -12,8 +12,8 @@ const Categories = () => {
   };
 
   return (
-    <div className="p-4 pt-32">
-      <h1 className='text-xl font-semibold pb-2'>Categories</h1>
+    <div className="p-4 pt-4">
+      <h1 className='text-lg font-bold pb-2'>Categories</h1>
       {/* Display the grid of categories */}
       <div className="grid grid-cols-3 gap-4">
         {itemsData.categories.map((category, index) => (

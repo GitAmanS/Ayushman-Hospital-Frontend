@@ -38,7 +38,7 @@ const MobileHeader = () => {
 <div className='open-sans'>
       {/* Navbar */}
       <div
-        className={`fixed z-50 border-b top-0 py-3 left-0 right-0 bg-white text-black flex items-center justify-between px-4 transition-transform duration-300 ease-in-out ${
+        className={`fixed z-30 border-b top-0 py-3 left-0 right-0 bg-white text-black flex items-center justify-between px-4 transition-transform duration-300 ease-in-out ${
           isScrollingUp ? 'transform translate-y-0' : 'transform -translate-y-full'
         } md:hidden`}
       >

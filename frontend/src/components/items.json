@@ -3,6 +3,7 @@
     {
       "category": "ECG",
       "image": "./cat1.png",
+      "description": "Electrocardiograms (ECGs) are vital tests that monitor the heart's electrical activity. They help in diagnosing heart conditions and assessing heart health, making them essential for patients with heart disease risk factors.",
       "products": [
         {
           "product_id": 1,
@@ -27,6 +28,7 @@
     {
       "category": "X-Ray",
       "image": "cat2.png",
+      "description": "X-rays utilize radiation to create images of the body's internal structures, particularly bones. They are crucial for diagnosing fractures, infections, and other medical conditions, allowing for effective treatment planning.",
       "products": [
         {
           "product_id": 3,
@@ -51,6 +53,7 @@
     {
       "category": "Pathology",
       "image": "cat3.png",
+      "description": "Pathology involves analyzing bodily fluids and tissues to identify diseases. It plays a key role in diagnosis and treatment decisions, providing critical insights into patient health through various testing methods.",
       "products": [
         {
           "product_id": 5,

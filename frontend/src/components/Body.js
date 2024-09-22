@@ -1,15 +1,15 @@
-import React from 'react'
-import Header from './Header'
-import Footer from './Footer'
+import React from 'react';
+import Header from './Header';
+import Footer from './Footer';
 
-const Body = ({element}) => {
+const Body = ({ element, showFooter = true }) => {
   return (
     <div>
-        <Header/>
-        {element}
-        <Footer/>
+      <Header />
+      {element}
+      {showFooter && <Footer />} {/* Render footer only if showFooter is true */}
     </div>
-  )
-}
+  );
+};
 
-export default Body
+export default Body;
