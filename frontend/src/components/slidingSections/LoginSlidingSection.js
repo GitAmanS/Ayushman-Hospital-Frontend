@@ -1,18 +1,18 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { MaterialSymbolsClose } from "../icons/MaterialSymbolsClose";
 import { Link } from "react-router-dom";
-
+import { UserContext } from "../Context/UserContext";
 const OTPInput = ({ length = 6, value, onChange }) => {
   const inputs = useRef([]);
 
   const handleChange = (e, index) => {
-    const { value } = e.target;
+    const { value: inputValue } = e.target;
 
-    // Only allow single digit input
-    if (value.match(/^\d$/)) {
-      const newOtp = [...value];
-      newOtp[index] = value;
-      onChange(newOtp.join(""));
+    // Allow only single digit input
+    if (inputValue.match(/^\d$/)) {
+      const newOtp = value.split(""); // Use the current value to update
+      newOtp[index] = inputValue; // Update the current index with the input value
+      onChange(newOtp.join("")); // Call onChange with the updated value
 
       // Move focus to the next input
       if (index < length - 1) {
@@ -21,44 +21,48 @@ const OTPInput = ({ length = 6, value, onChange }) => {
     }
 
     // Move focus to previous input on backspace
-    if (value === "" && index > 0) {
-      inputs.current[index - 1].focus();
-    }
-  };
-
-  const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && value[index] === "") {
-      // Move focus to previous input on backspace if current input is empty
-      if (index > 0) {
-        inputs.current[index - 1].focus();
-      }
+    if (inputValue === "" && index > 0) {
+      const newOtp = value.split(""); // Use the current value
+      newOtp[index] = ""; // Clear the current index
+      onChange(newOtp.join("")); // Call onChange with the updated value
+      inputs.current[index - 1].focus(); // Focus the previous input
     }
   };
 
   return (
-    <div className="flex justify-center space-x-2 mb-4">
-      {Array.from({ length }).map((_, index) => (
-        <input
-          key={index}
-          type="text"
-          maxLength="1"
-          value={value[index] || ""}
-          onChange={(e) => handleChange(e, index)}
-          onKeyDown={(e) => handleKeyDown(e, index)}
-          ref={(el) => (inputs.current[index] = el)}
-          className="w-10 h-10 border border-gray-300 rounded-lg text-center text-sm focus:border-blue-500 focus:outline-none"
-        />
-      ))}
+    <div style={{ display: 'flex' }}>
+      {Array(length)
+        .fill(null)
+        .map((_, index) => (
+          <input
+            key={index}
+            type="text"
+            maxLength="1"
+            ref={(el) => (inputs.current[index] = el)}
+            value={value[index] || ""} // Set the value from the prop
+            onChange={(e) => handleChange(e, index)}
+            style={{
+              width: '40px',
+              height: '40px',
+              textAlign: 'center',
+              marginRight: '5px',
+              fontSize: '18px',
+              border: '1px solid #ccc',
+              borderRadius: '4px',
+            }}
+          />
+        ))}
     </div>
   );
 };
-
 const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");
   const [email, setEmail] = useState(""); // New state for email
   const [isOtpSent, setIsOtpSent] = useState(false);
-  const [isOtpVerified, setIsOtpVerified] = useState(false); // New state to track OTP verification
+  // const [isOtpVerified, setIsOtpVerified] = useState(false); // New state to track OTP verification
+  // const [isNewUser, setIsNewUser] = useState(false);
+  const {requestOtp, verifyOtp,submitEmailF, isOtpVerified, isNewUser} = useContext(UserContext);
 
   const handleChange = (e) => {
     const value = e.target.value;
@@ -67,14 +71,88 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
     }
   };
 
-  const handleGetVerificationCode = () => {
-    setIsOtpSent(true);
-  };
+  // const handleGetVerificationCode = async() => {
+  //   const phone =91+phoneNumber.toString()
+  //   const response = await fetch('http://localhost:5000/api/auth/request-otp', {
+  //     method: 'POST',
+  //     headers: { 'Content-Type': 'application/json' },
+  //     body: JSON.stringify({ phone }),
+  //   });
 
-  const handleVerifyOtp = () => {
-    // Add logic to verify OTP here
-    setIsOtpVerified(true);
+  //   console.log(response.json())
+  //   setIsOtpSent(true);
+  // };
+
+  const handleGetVerificationCode = async()=>{
+    await requestOtp(phoneNumber);
+    setIsOtpSent(true);
+  }
+
+  // const submitEmail = async() =>{
+  //   try{
+  //     const response = await fetch('http://localhost:5000/api/auth/submitemail', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ email }),
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //     } else {
+  //       const errorData = await response.json();
+  //       console.error('Error:', errorData);
+  //       throw new Error('Login failed');
+  //     }
+  //   }
+  //   catch (error) {
+  //     console.error('An error occurred:', error);
+  //   }
+  // }
+
+  const submitEmail = async () =>{
+    submitEmailF(email)
+  }
+
+  // const handleVerifyOtp = async () => {
+  //   console.log("OTP:", otp);
+  //   const phone = `91${phoneNumber.toString()}`; // Ensure phone number format is correct
+  
+  //   try {
+  //     const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ phone, otp }),
+  //     });
+  
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       console.log(data.isNewUser);
+        
+  //       // Check if the user is new
+  //       if (data.isNewUser) {
+  //         setIsOtpVerified(true); // Proceed to ask for email submission
+  //       } else {
+  //         // Close the sliding section if the user is not new
+  //         toggleSlide();
+  //       }
+  //     } else {
+  //       const errorData = await response.json();
+  //       console.error('Error:', errorData);
+  //       throw new Error('Login failed');
+  //     }
+  //   } catch (error) {
+  //     console.error('An error occurred:', error);
+  //   }
+  // };
+
+  const handleVerifyOtp = async () => {
+    await verifyOtp(phoneNumber, otp); // Call the context's verifyOtp function
+    if (!isNewUser) {
+      toggleSlide(); // Close the sliding section if the user is not new
+    }
   };
+  
+  
 
   const handleChangeNumber = () => {
     setIsOtpSent(false);
@@ -119,7 +197,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
           <div className="relative">
             {isOtpSent ? (
               <>
-                {isOtpVerified ? (
+                {isOtpVerified && isNewUser ? ( // Check if user is new
                   <>
                     <input
                       type="email"
@@ -136,26 +214,28 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
                     </button>
                   </>
                 ) : (
-                  <>
-                    <p className="text-center mb-4">
-                      A 6-digit code has been sent to +91 {phoneNumber}
-                    </p>
-                    <OTPInput length={6} value={otp} onChange={setOtp} />
-                    <button
-                      className="w-full mt-4 py-3 rounded-lg font-bold text-white px-4 bg-red-500"
-                      onClick={handleVerifyOtp} // Verify OTP
-                    >
-                      Continue
-                    </button>
-                    <p className="text-center mb-1">
+                  !isOtpVerified && (
+                    <>
+                      <p className="text-center mb-4">
+                        A 6-digit code has been sent to +91 {phoneNumber}
+                      </p>
+                      <OTPInput length={6} value={otp} onChange={setOtp} />
                       <button
-                        className="underline text-blue-600"
-                        onClick={handleChangeNumber}
+                        className="w-full mt-4 py-3 rounded-lg font-bold text-white px-4 bg-red-500"
+                        onClick={handleVerifyOtp} // Verify OTP
                       >
-                        Change Number
+                        Continue
                       </button>
-                    </p>
-                  </>
+                      <p className="text-center mb-1">
+                        <button
+                          className="underline text-blue-600"
+                          onClick={handleChangeNumber}
+                        >
+                          Change Number
+                        </button>
+                      </p>
+                    </>
+                  )
                 )}
               </>
             ) : (
