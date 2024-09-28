@@ -1,4 +1,4 @@
-import React, { useState, useRef, useContext } from "react";
+import React, { useState, useRef, useContext, useEffect } from "react";
 import { MaterialSymbolsClose } from "../icons/MaterialSymbolsClose";
 import { Link } from "react-router-dom";
 import { UserContext } from "../Context/UserContext";
@@ -7,7 +7,6 @@ const OTPInput = ({ length = 6, value, onChange }) => {
 
   const handleChange = (e, index) => {
     const { value: inputValue } = e.target;
-
     // Allow only single digit input
     if (inputValue.match(/^\d$/)) {
       const newOtp = value.split(""); // Use the current value to update
@@ -147,10 +146,16 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
 
   const handleVerifyOtp = async () => {
     await verifyOtp(phoneNumber, otp); // Call the context's verifyOtp function
-    if (!isNewUser) {
-      toggleSlide(); // Close the sliding section if the user is not new
-    }
   };
+
+  useEffect(() => {
+    if (isNewUser !== undefined) {
+      console.log("is user new?", isNewUser);
+      if (!isNewUser && isOtpVerified) {
+        toggleSlide(); // Close the sliding section if the user is not new
+      }
+    }
+  }, [isNewUser]);
   
   
 
@@ -161,6 +166,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
   };
 
   const handleSubmitEmail = () => {
+    submitEmailF(email)
     // Handle email submission logic here
     console.log("Email submitted:", email);
     toggleSlide(); // Close the sliding section after submission

@@ -7,16 +7,19 @@ import { Fa6SolidUserDoctor } from './icons/Fa6SolidUserDoctor';
 import { MdiAddressMarkerOutline } from './icons/MdiAddressMarkerOutline';
 import LoginSlidingSection from './slidingSections/LoginSlidingSection';
 import { UserContext } from './Context/UserContext';
+import { useNavigate } from 'react-router-dom';
 const Profile = () => {
-    const {user} = useContext(UserContext)
+    const {user , isNewUser, setIsNewUser} = useContext(UserContext)
     const [isSlidingOpen, setIsSlidingOpen] = useState(false);
-
+    const navigate = useNavigate();
     // Toggle the sliding section
     const toggleSlide = () => {
       setIsSlidingOpen(!isSlidingOpen);
     };
 
-
+    const navigateTo= (address)=>{
+        navigate(address)
+    }
     useEffect(() => {
         // Lock or unlock scroll
         if (isSlidingOpen) {
@@ -34,7 +37,7 @@ const Profile = () => {
     <div className='flex flex-col pt-24'>
         <div className='p-4 border-b'>
             <h1 className='font-bold text-2xl'>Hi There!</h1>
-            {user ? <p>View your profile</p>
+            {user ? <p onClick={() => navigateTo("/profiledetails")} className='font-bold text-red-500'>View your profile</p>
             :<div>
                 
             <p>Sign in to start your healthcare journy</p>

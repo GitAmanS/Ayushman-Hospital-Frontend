@@ -13,11 +13,13 @@ import Profile from './components/Profile.js'
 import { UserProvider } from './components/Context/UserContext';
 import ProductDetail from './components/ProductDetail.js';
 import CategoriesPage from './components/CategoriesPage.js';
+import ProfileDetailsPage from './ProfileDetailsPage.js';
 function App() {
   return (
     <div className='open-sans'>
+                <Router>
           <UserProvider>
-          <Router>
+
             <Routes>
               <Route path="/" element={<Body element={<Home />}/>} />
               <Route path="/services" element={<Body element={<Services/>}/>}/>
@@ -26,10 +28,12 @@ function App() {
               <Route path="/cart" element={<Cart/>}/>
               <Route path="/profile" element={<Body element={<Profile/>}/>}/>
               <Route path="/product/:productId" element={<Body element={<ProductDetail />} showFooter={false}/>} />
+              <Route path="/profiledetails" element={<Body element={<ProfileDetailsPage />} showFooter={false}/>} />
               {/* <Route path="/service/:id" element={} /> */}
             </Routes>
-          </Router>
+  
     </UserProvider>
+    </Router>
     </div>
 
 

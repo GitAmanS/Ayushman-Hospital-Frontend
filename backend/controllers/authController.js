@@ -1,3 +1,4 @@
+// controllers/authController.js
 const User = require('../models/User');
 const twilioService = require('../services/twilioService');
 
@@ -11,45 +12,30 @@ exports.requestOtp = async (req, res) => {
     // Store OTP in memory
     otpStore[phone] = otp;
 
-    // Uncomment the following lines to send OTP in production
-    /*
-    try {
-        await twilioService.sendOtp(phone, otp);
-        res.status(200).send('OTP sent successfully.');
-    } catch (error) {
-        res.status(500).send('Error sending OTP.');
-    }
-    */
-    
     // For testing, return success message without sending OTP
     res.status(200).json({
         message: 'OTP sent successfully.',
         otp: otp, // send OTP in a structured format
-      });
+    });
 };
 
-
-// Verify OTP function
-exports.verifyOtp = async (req, res) => { 
+// controllers/authController.js
+exports.verifyOtp = async (req, res) => {
     const { phone, otp } = req.body;
 
     // Check for OTP in memory
     const storedOtp = otpStore[phone];
 
-    // Use a constant OTP for verification during testing
-    const constantOtp = '123456';
-
     if (!storedOtp) {
         return res.status(400).send('OTP has expired or not requested.');
     }
 
-    if (storedOtp === otp || otp === constantOtp) {
+    if (storedOtp === otp) {
         // OTP verified successfully, remove it from the store
         delete otpStore[phone];
 
         // Check if user exists
         let user = await User.findOne({ phone });
-        const isNewUser = !user; // Determine if the user is new
 
         if (!user) {
             // User does not exist, sign up
@@ -57,17 +43,17 @@ exports.verifyOtp = async (req, res) => {
                 phone, 
                 joinedAt: new Date(), 
                 verified: true,
-                email: null
+                email: '' // Set email to an empty string but ensure validation prevents duplicates
             });
             await user.save();
             return res.status(201).send({
                 message: 'User signed up successfully.',
-                isNewUser: true, // Indicate new user
+                isNewUser: true,
             });
         }
 
         // User exists, log in
-        user.verified = true; // Ensure the user is marked as verified
+        user.verified = true; 
         await user.save();
 
         // Set a cookie
@@ -84,15 +70,12 @@ exports.verifyOtp = async (req, res) => {
                 email: user.email,
                 joinedAt: user.joinedAt,
             },
-            isNewUser: false, // Indicate existing user
+            isNewUser: false,
         });
     } else {
         return res.status(400).send('Invalid OTP.');
     }
 };
-
-
-
 
 exports.submitEmail = async (req, res) => {
     const { email } = req.body;
@@ -104,9 +87,19 @@ exports.submitEmail = async (req, res) => {
         return res.status(404).send('User not found.');
     }
 
-    // Update the user's email and set isNewUser to false
+    // Validate email before submission
+    if (!email || email.trim().length === 0) {
+        return res.status(400).send('Email cannot be empty.');
+    }
+
+    // Check if email already exists in the database
+    const existingUser = await User.findOne({ email: email });
+    if (existingUser) {
+        return res.status(400).send('Email already exists.');
+    }
+
+    // Update the user's email
     user.email = email;
-    user.isNewUser = false;
 
     try {
         await user.save();
@@ -117,21 +110,22 @@ exports.submitEmail = async (req, res) => {
                 email: user.email,
                 joinedAt: user.joinedAt,
             },
-            isNewUser: false, // Update isNewUser to false
+            isNewUser: false,
         });
     } catch (error) {
         return res.status(500).send('Error updating user email.');
     }
 };
 
-exports.testUserRouter = async (req, res)=>{
-    try{
+
+exports.testUserRouter = async (req, res) => {
+    try {
         console.log(req.user);
         res.status(200).json({
-            message: 'this is user',
-            user: req.user, // send OTP in a structured format
+            message: 'This is user',
+            user: req.user, // send user info
         });
-    }catch (error){
-        return res.status(500).send(error)
+    } catch (error) {
+        return res.status(500).send(error);
     }
-}
+};
