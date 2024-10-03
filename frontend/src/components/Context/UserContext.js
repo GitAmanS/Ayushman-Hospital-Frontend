@@ -41,6 +41,21 @@ export const UserProvider = ({ children }) => {
   const [isNewUser, setIsNewUser] = useState(false); // To track if user is new
   const navigate = useNavigate();
 
+  // Effect to retrieve user from local storage on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  // Effect to store user in local storage whenever it changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('user', JSON.stringify(user));
+    }
+  }, [user]);
+
   // Add an item to the cart or increase quantity
   const addItemToCart = (productId) => {
     const updatedCart = user.cart.map((item) =>
@@ -70,27 +85,20 @@ export const UserProvider = ({ children }) => {
     setUser({ ...user, cart: updatedCart });
   };
 
-
-
-
-
-  //otp login and singup
-
-  const requestOtp = async(phoneNumber) => {
-    const phone =91+phoneNumber.toString()
+  // OTP login and signup methods
+  const requestOtp = async (phoneNumber) => {
+    const phone = `91${phoneNumber.toString()}`;
     const response = await fetch('/api/auth/request-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone }),
     });
-
-    console.log(response.json())
-    
+    console.log(await response.json());
   };
 
-  const submitEmailF = async(email) =>{
-    try{
-      const response = await fetch('/api/auth/submitemail', {
+  const submitEmailF = async (email) => {
+    try {
+      const response = await fetch('/api/auth/submit-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
@@ -99,65 +107,44 @@ export const UserProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
+        console.log("user",data.user)
       } else {
         const errorData = await response.json();
         console.error('Error:', errorData);
         throw new Error('Login failed');
       }
-    }
-    catch (error) {
+    } catch (error) {
       console.error('An error occurred:', error);
     }
-  }
+  };
 
-// OTP verification function
-const verifyOtp = async (phoneNumber, otp) => {
-  console.log("OTP:", otp);
-  const phone = `91${phoneNumber.toString()}`; // Ensure phone number format is correct
+  // OTP verification function
+  const verifyOtp = async (phoneNumber, otp) => {
+    const phone = `91${phoneNumber.toString()}`;
 
-  try {
-    const response = await fetch('/api/auth/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone, otp }),
-    });
+    try {
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp }),
+      });
 
-    if (response.ok) {
-      const data = await response.json();
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.user);
 
-      // Update user state directly without awaiting
-      setUser(data.user);
-
-      // Set isNewUser based on the response from the server
-      // In the context where isNewUser is set
-      console.log("Setting isNewUser to:", data.isNewUser);
-      setIsNewUser(data.isNewUser);
-      console.log("isNewUser after setting:", isNewUser); // This will likely still show the old value immediately after
-      // No need for await here, setIsNewUser doesn't return a promise
-
-      // Log updated state immediately after setting it
-      console.log("is user new context:", data.isNewUser);
-      console.log("Updated isNewUser state:", data.isNewUser);
-
-
-      // Set OTP verified
-      setIsOtpVerified(true); 
-
-      // Log user info and new user status
-      console.log("user:", data.user);
-      console.log("is user new?", data.isNewUser, "is otp verified", true);
-    } else {
-      const errorData = await response.json();
-      console.error('Error:', errorData);
-      throw new Error('Login failed');
+        console.log("user", data.user)
+        setIsNewUser(data.isNewUser);
+        setIsOtpVerified(true);
+      } else {
+        const errorData = await response.json();
+        console.error('Error:', errorData);
+        throw new Error('Login failed');
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
     }
-  } catch (error) {
-    console.error('An error occurred:', error);
-  }
-};
-
-
-
+  };
 
   // Simulate logout
   const logout = () => {
@@ -165,15 +152,8 @@ const verifyOtp = async (phoneNumber, otp) => {
     setUser(null);
     setCartProducts([]);
     localStorage.removeItem('user');
-
-    // Clear user cookie
     document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    navigate("/profile")
-  };
-
-  // Simulate user authentication (dummy)
-  const checkAuth = () => {
-    return user !== null;
+    navigate("/profile");
   };
 
   // Fetch products in the cart
@@ -190,13 +170,6 @@ const verifyOtp = async (phoneNumber, otp) => {
   };
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, []);
-
-  useEffect(() => {
     if (user) {
       fetchCartProducts(); // Fetch cart products when user logs in or updates
     }
@@ -204,7 +177,7 @@ const verifyOtp = async (phoneNumber, otp) => {
 
   return (
     <UserContext.Provider
-      value={{isNewUser, setIsNewUser, user,isOtpVerified, isNewUser, requestOtp, verifyOtp,submitEmailF, logout, checkAuth, cartProducts, addItemToCart, decreaseItemQuantity }}
+      value={{ isNewUser, setIsNewUser, user, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
     >
       {children}
     </UserContext.Provider>

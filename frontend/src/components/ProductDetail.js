@@ -1,11 +1,12 @@
 // src/components/ProductDetail.js
-import React from 'react';
+import React, { useContext } from 'react';
 import { useParams } from 'react-router-dom';
 import items from './items.json'; // Import your items.json file
+import { UserContext } from './Context/UserContext';
 
 const ProductDetail = () => {
   const { productId } = useParams(); // Get the product ID from the URL
-
+  const {user} = useContext(UserContext)
   // Function to find product by ID
   const findProductById = (id) => {
     let foundProduct = null;

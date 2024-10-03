@@ -17,6 +17,8 @@ const Profile = () => {
       setIsSlidingOpen(!isSlidingOpen);
     };
 
+
+
     const navigateTo= (address)=>{
         navigate(address)
     }
@@ -33,6 +35,8 @@ const Profile = () => {
           document.body.style.overflow = "auto"; // Reset scroll
         };
       }, [isSlidingOpen]);
+          // If user is not available, redirect or handle loading state
+
   return (
     <div className='flex flex-col pt-24'>
         <div className='p-4 border-b'>

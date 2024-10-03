@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const connectDB = require('./config/db.js');
 const authRoutes = require('./routes/authRoutes.js');
+const productRoutes = require('./routes/productRoutes.js')
 require('dotenv').config();
 const cors = require('cors')
 const path = require('path');
@@ -15,6 +16,7 @@ connectDB();
 
 // Use the auth routes
 app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../frontend/build')));

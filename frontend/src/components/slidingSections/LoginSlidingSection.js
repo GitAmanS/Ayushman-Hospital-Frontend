@@ -146,16 +146,18 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
 
   const handleVerifyOtp = async () => {
     await verifyOtp(phoneNumber, otp); // Call the context's verifyOtp function
-  };
+};
 
-  useEffect(() => {
-    if (isNewUser !== undefined) {
-      console.log("is user new?", isNewUser);
-      if (!isNewUser && isOtpVerified) {
-        toggleSlide(); // Close the sliding section if the user is not new
-      }
+// Use useEffect to handle side effects based on state changes
+useEffect(() => {
+    if (isOtpVerified) {
+        console.log("isUserNew", isNewUser);
+        if (!isNewUser) {
+            toggleSlide(); // Close the sliding section if the user is not new
+        }
     }
-  }, [isNewUser]);
+}, [isOtpVerified, isNewUser]); // Dependencies to watch for changes
+
   
   
 

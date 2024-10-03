@@ -13,7 +13,7 @@ import Profile from './components/Profile.js'
 import { UserProvider } from './components/Context/UserContext';
 import ProductDetail from './components/ProductDetail.js';
 import CategoriesPage from './components/CategoriesPage.js';
-import ProfileDetailsPage from './ProfileDetailsPage.js';
+import ProfileDetailsPage from './components/ProfileDetailsPage.js';
 function App() {
   return (
     <div className='open-sans'>
