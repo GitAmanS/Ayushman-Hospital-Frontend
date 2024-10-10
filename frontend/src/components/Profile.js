@@ -38,7 +38,7 @@ const Profile = () => {
           // If user is not available, redirect or handle loading state
 
   return (
-    <div className='flex flex-col pt-24'>
+    <div className='flex flex-col pt-24 md:px-40'>
         <div className='p-4 border-b'>
             <h1 className='font-bold text-2xl'>Hi There!</h1>
             {user ? <p onClick={() => navigateTo("/profiledetails")} className='font-bold text-red-500'>View your profile</p>
@@ -48,7 +48,7 @@ const Profile = () => {
             <button onClick={toggleSlide} className='font-bold w-full px-auto mt-2  py-2 text-white bg-red-500 rounded-lg'>Sign in</button></div>}
         </div>
 
-        <div className='flex flex-col justify-center border-b-8 border-gray-100 py-3'>
+        <div onClick={()=>{navigateTo("/orders")}} className='flex flex-col justify-center border-b-8 border-gray-100 py-3'>
             <div className='flex flex-row px-4'>
                 <div className='flex justify-center items-center mr-4 text-xl'>
                     <SolarCart5BoldDuotone/>
@@ -87,7 +87,7 @@ const Profile = () => {
                 </h1>
             </div>
 
-            <div className='flex flex-row px-4'>
+            <div onClick={()=>{navigateTo("/addressbook")}} className='flex flex-row px-4'>
                 <div className='flex justify-center items-center mr-4 text-xl'>
                     <MdiAddressMarkerOutline/>
                 </div>

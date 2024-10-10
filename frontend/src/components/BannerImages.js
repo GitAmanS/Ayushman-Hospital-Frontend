@@ -21,7 +21,7 @@ const BannerImages = () => {
   }, []);
 
   return (
-    <div className="relative w-full p-4">
+    <div className="relative w-full p-4 md:p-8 md:px-36">
       {/* Image Display */}
       <div className="w-full overflow-hidden rounded-lg shadow-lg">
         <div

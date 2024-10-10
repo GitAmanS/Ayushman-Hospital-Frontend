@@ -5,7 +5,7 @@ import MostBookedServices from './MostBookedServices'
 
 const Home = () => {
   return (
-    <div className='mt-20'>
+    <div className='mt-20 md:px-40'>
         <BannerImages/>
         <Categories/>
         <MostBookedServices/>

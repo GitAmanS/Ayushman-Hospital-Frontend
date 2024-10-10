@@ -85,7 +85,7 @@ const ProfileDetailsPage = () => {
     const formattedDate = date.toLocaleString('en-US', options);
 
     return (
-        <div className='mt-24'>
+        <div className='mt-24 md:px-36'>
             <div className='p-4 border-b'>
                 <h1 className='font-bold text-2xl'>Hi There!</h1>
                 <p>Joined in {formattedDate}</p>

@@ -61,7 +61,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
   const [isOtpSent, setIsOtpSent] = useState(false);
   // const [isOtpVerified, setIsOtpVerified] = useState(false); // New state to track OTP verification
   // const [isNewUser, setIsNewUser] = useState(false);
-  const {requestOtp, verifyOtp,submitEmailF, isOtpVerified, isNewUser} = useContext(UserContext);
+  const {requestOtp,setIsOtpVerified,  verifyOtp,submitEmailF, isOtpVerified, isNewUser} = useContext(UserContext);
 
   const handleChange = (e) => {
     const value = e.target.value;
@@ -153,7 +153,9 @@ useEffect(() => {
     if (isOtpVerified) {
         console.log("isUserNew", isNewUser);
         if (!isNewUser) {
-            toggleSlide(); // Close the sliding section if the user is not new
+            toggleSlide();
+            setIsOtpVerified(false)
+            console.log("this line exe") // Close the sliding section if the user is not new
         }
     }
 }, [isOtpVerified, isNewUser]); // Dependencies to watch for changes
@@ -175,16 +177,16 @@ useEffect(() => {
   };
 
   return (
-    <>
+    <div className="md:flex md:flex-row md:justify-center md:items-center">
       <div
         className={`fixed inset-0 bg-black transition-opacity duration-500 ease-in-out ${
           isOpen ? "opacity-80" : "opacity-0 pointer-events-none"
-        } z-40`}
+        }  z-40`}
         onClick={toggleSlide}
       ></div>
 
       <div
-        className={`fixed bottom-0 left-0 w-full rounded-t-2xl bg-white h-[45%] shadow-lg transform transition-transform duration-500 ease-in-out ${
+        className={`fixed bottom-0 md:px-24  md:w-fit   w-full rounded-t-2xl bg-white md:h-[55%] h-[45%] shadow-lg transform transition-transform duration-500 ease-in-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         } z-50`}
       >
@@ -284,7 +286,7 @@ useEffect(() => {
           </p>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 

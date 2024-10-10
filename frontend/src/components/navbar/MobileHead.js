@@ -40,9 +40,9 @@ const MobileHeader = () => {
       <div
         className={`fixed z-30 border-b top-0 py-3 left-0 right-0 bg-white text-black flex items-center justify-between px-4 transition-transform duration-300 ease-in-out ${
           isScrollingUp ? 'transform translate-y-0' : 'transform -translate-y-full'
-        } md:hidden`}
+        } md:py-4 md:px-36 `}
       >
-      {location.pathname === "/" ? (<h1 className="text-sm font-bold flex flex-col text-left">
+      {location.pathname === "/" ? (<h1 className="text-sm md:text-xl font-bold flex flex-col text-left">
         <span style={{ marginBottom: '-8px' }}>AYUSHMAN</span>
         <span>HOSPITAL</span>
         <div className="bg-sky-900 h-1"></div>

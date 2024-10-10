@@ -5,7 +5,7 @@ import Footer from './Footer';
 const Body = ({ element, showFooter = true }) => {
   return (
     <div>
-      <Header />
+      <Header showFooter={showFooter}/>
       {element}
       {showFooter && <Footer />} {/* Render footer only if showFooter is true */}
     </div>

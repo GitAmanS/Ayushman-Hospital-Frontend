@@ -1,51 +1,75 @@
 import React, { createContext, useState, useEffect } from 'react';
 import productData from '../items.json'; // Import your JSON file with product data
 import { useNavigate } from 'react-router-dom';
-
+import axios from "axios";
 // Create the context
 export const UserContext = createContext();
 
 // Dummy data for testing
-const dummyUser = {
-  id: 1,
-  name: 'John Doe',
-  profilePic: 'https://via.placeholder.com/150',
-  email: 'john.doe@example.com',
-  address: '123 Main St, Cityville',
-  cart: [
-    { productId: 1, quantity: 2 },
-    { productId: 3, quantity: 1 },
-  ],
-  orders: [
-    { id: 201, name: 'Order 1', date: '2023-09-10', total: 200 },
-    { id: 202, name: 'Order 2', date: '2023-09-15', total: 300 },
-  ],
-  addresses: [
-    { id: 301, address: '123 Main St, Cityville' },
-    { id: 302, address: '456 Oak St, Townville' },
-  ],
-  consultations: [
-    { id: 401, doctor: 'Dr. Smith', date: '2023-09-20', status: 'completed' },
-    { id: 402, doctor: 'Dr. Adams', date: '2023-09-25', status: 'upcoming' },
-  ],
-  tests: [
-    { id: 501, test: 'Blood Test', date: '2023-09-22', result: 'Normal' },
-    { id: 502, test: 'X-ray', date: '2023-09-27', result: 'Pending' },
-  ],
-};
+// const dummyUser = {
+//   id: 1,
+//   name: 'John Doe',
+//   profilePic: 'https://via.placeholder.com/150',
+//   email: 'john.doe@example.com',
+//   address: '123 Main St, Cityville',
+//   cart: [
+//     { productId: 1, quantity: 2 },
+//     { productId: 3, quantity: 1 },
+//   ],
+//   orders: [
+//     { id: 201, name: 'Order 1', date: '2023-09-10', total: 200 },
+//     { id: 202, name: 'Order 2', date: '2023-09-15', total: 300 },
+//   ],
+//   addresses: [
+//     { id: 301, address: '123 Main St, Cityville' },
+//     { id: 302, address: '456 Oak St, Townville' },
+//   ],
+//   consultations: [
+//     { id: 401, doctor: 'Dr. Smith', date: '2023-09-20', status: 'completed' },
+//     { id: 402, doctor: 'Dr. Adams', date: '2023-09-25', status: 'upcoming' },
+//   ],
+//   tests: [
+//     { id: 501, test: 'Blood Test', date: '2023-09-22', result: 'Normal' },
+//     { id: 502, test: 'X-ray', date: '2023-09-27', result: 'Pending' },
+//   ],
+// };
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [cartProducts, setCartProducts] = useState([]);
   const [isOtpVerified, setIsOtpVerified] = useState(false); // To track OTP verification
   const [isNewUser, setIsNewUser] = useState(false); // To track if user is new
+  const [categories, setCategories] = useState([]);
+  const [cartTotal, setCartTotal] =useState(null);
   const navigate = useNavigate();
+  const [orders, setOrders] = useState([]);
+  const [selectedAddress, setSelectedAddress] = useState();
+  const [addresses, setAddresses] = useState([]);
+
+
+  const fetchCart = async()=>{
+    try {
+    
+      const response = await axios.get('http://localhost:5000/api/cart', {
+        withCredentials: true, // Send cookies along with the request
+      });
+      console.log("cart recieved:",response.data.cart)
+      setCartProducts(response.data.cart)
+      setCartTotal(response.data.cartTotal)
+  
+    } catch (error) {
+      console.error('Error recieving cart:', error);
+    }
+  }
+
+  
 
   // Effect to retrieve user from local storage on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      fetchCart()
     }
   }, []);
 
@@ -56,34 +80,145 @@ export const UserProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Add an item to the cart or increase quantity
-  const addItemToCart = (productId) => {
-    const updatedCart = user.cart.map((item) =>
-      item.productId === productId
-        ? { ...item, quantity: item.quantity + 1 }
-        : item
+
+  
+  useEffect(() => {
+    const fetchAddresses = async () => {
+        try {
+            const response = await axios.get('/api/address');
+            await setAddresses(response.data.addresses || []);
+            console.log(response.data.addresses)
+        } catch (err) {
+            console.error('Error fetching addresses:', err);
+        }
+    };
+    fetchAddresses();
+}, []);
+  const clearOrders = async()=>{
+    try{
+      const response = await axios.delete('/api/clearorders', 
+        {},
+        { withCredentials: true })
+
+        setOrders(response.data.orders);
+    }catch(err){
+      console.log("error clearing order", err)
+    }
+  }
+
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const data = await response.json();
+      setCategories(data.categories); // Assuming the API returns an array of categories
+      console.log("categories", data.categories)
+    } catch (error) {
+      console.error('An error occurred while fetching categories:', error);
+    }
+  };
+
+
+
+
+  
+
+  // Call fetchCategories when the component mounts
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+// Add item to cart function
+const addItemToCart = async (productId) => {
+  // Check if the product is already in the user's cart
+  // const isProductInCart = user.cart.some((item) => item.productId === productId);
+  
+  // let updatedCart;
+  
+  // if (isProductInCart) {
+  //   // If the product is already in the cart, increase the quantity
+  //   updatedCart = user.cart.map((item) =>
+  //     item.productId === productId
+  //       ? { ...item, quantity: item.quantity + 1 }
+  //       : item
+  //   );
+  // } else {
+  //   // If the product is not in the cart, add it with a quantity of 1
+  //   updatedCart = [...user.cart, { productId, quantity: 1 }];
+  // }
+
+  // // Update the user's cart state
+  // setUser({ ...user, cart: updatedCart });
+
+  // Update the cart products to reflect the changes
+  
+
+  // Send request to the backend to update the cart in the database
+  try {
+    
+    const response = await axios.post('http://localhost:5000/api/cart/add', 
+      { productId, quantity: 1 }, // Data to send
+      { withCredentials: true } // Sending cookies
     );
 
-    const isProductInCart = user.cart.some((item) => item.productId === productId);
-    if (!isProductInCart) {
-      updatedCart.push({ productId, quantity: 1 });
-    }
+    setCartProducts(response.data.cart)
+    setCartTotal(response.data.cartTotal)
 
-    setUser({ ...user, cart: updatedCart });
-  };
+  } catch (error) {
+    console.error('Error adding item to cart:', error);
+  }
+};
 
-  // Decrease item quantity or remove if quantity is 0
-  const decreaseItemQuantity = (productId) => {
-    const updatedCart = user.cart
-      .map((item) =>
-        item.productId === productId
-          ? { ...item, quantity: item.quantity - 1 }
-          : item
-      )
-      .filter((item) => item.quantity > 0);
+// Decrease item quantity or remove it from cart if quantity becomes 0
+const decreaseItemQuantity = async (productId) => {
+  // Check if the product exists in the cart
+  const updatedCart = user.cart
+  //   .map((item) => 
+  //     item.productId === productId 
+  //       ? { ...item, quantity: item.quantity - 1 } 
+  //       : item
+  //   )
+  //   .filter((item) => item.quantity > 0); // Filter out items with 0 quantity
 
-    setUser({ ...user, cart: updatedCart });
-  };
+  // // Update the user's cart state
+  // setUser({ ...user, cart: updatedCart });
+
+  // Update the cart products to reflect the changes
+  
+  // Send request to the backend to update the cart in the database
+  try {
+    console.log("product id", productId)
+    const response = await axios.post('http://localhost:5000/api/cart/remove', 
+      { productId, quantity: 1 }, // Data to send
+      { withCredentials: true } // Sending cookies
+    );
+    setCartProducts(response.data.cart)
+    setCartTotal(response.data.cartTotal)
+
+
+  } catch (error) {
+    console.error('Error removing item from cart:', error);
+  }
+};
+
+
+const clearCart = async()=>{
+  try {
+    const response = await axios.post('http://localhost:5000/api/cart/clear', 
+      {}, 
+      { withCredentials: true } // Sending cookies
+    );
+    setCartProducts(response.data.cart)
+    setCartTotal(response.data.cartTotal)
+
+
+  } catch (error) {
+    console.error('Error removing item from cart:', error);
+  }
+}
 
   // OTP login and signup methods
   const requestOtp = async (phoneNumber) => {
@@ -134,6 +269,7 @@ export const UserProvider = ({ children }) => {
         setUser(data.user);
 
         console.log("user", data.user)
+        setCartProducts(data.user.cart)
         setIsNewUser(data.isNewUser);
         setIsOtpVerified(true);
       } else {
@@ -156,28 +292,10 @@ export const UserProvider = ({ children }) => {
     navigate("/profile");
   };
 
-  // Fetch products in the cart
-  const fetchCartProducts = () => {
-    if (user?.cart) {
-      const productsInCart = user.cart.map((cartItem) => {
-        const product = productData.categories
-          .flatMap((category) => category.products)
-          .find((product) => product.product_id === cartItem.productId);
-        return { ...product, quantity: cartItem.quantity };
-      });
-      setCartProducts(productsInCart);
-    }
-  };
-
-  useEffect(() => {
-    if (user) {
-      fetchCartProducts(); // Fetch cart products when user logs in or updates
-    }
-  }, [user]);
 
   return (
     <UserContext.Provider
-      value={{ isNewUser, setIsNewUser, user, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
+      value={{addresses,fetchCart, setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
     >
       {children}
     </UserContext.Provider>

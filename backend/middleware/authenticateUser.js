@@ -36,6 +36,7 @@ const authenticateUser = async (req, res, next) => {
 
         // Attach user to the request object for further middleware/routes
         req.user = user;
+ 
         next();
     } catch (error) {
         console.error('Authentication error:', error);

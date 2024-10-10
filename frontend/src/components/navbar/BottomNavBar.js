@@ -57,7 +57,7 @@ const BottomNavBar = () => {
   //   setActiveTab(tabName);
   // };
   return (
-    <div className={`fixed bottom-0 z-30 left-0 right-0 text-black bg-white py-3 border-t border-gray-200 md:hidden transition-transform duration-500 ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
+    <div className={`fixed bottom-0 z-30 left-0 right-0 text-black bg-white py-3 border-t border-gray-200 md:px-36 transition-transform duration-500 ${isVisible ? 'translate-y-0' : 'translate-y-full'}`}>
     <nav className="flex justify-around text-sm px-1 items-end">
       <div onClick={()=>navigateTo("/")}  className="flex flex-col items-center">
 

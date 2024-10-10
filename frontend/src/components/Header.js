@@ -7,11 +7,11 @@ import { MdAccountCircle } from "react-icons/md";
 import { MdOutlineAccountCircle } from "react-icons/md";
 import BottomNavBar from './navbar/BottomNavBar';
 import MobileHeader from './navbar/MobileHead';
-const Header = () => {
+const Header = ({showFooter = true}) => {
   return (
     <header className="bg-white text-black open-sans">
         <MobileHeader/>
-        <BottomNavBar/>
+        {showFooter&& <BottomNavBar/>}
 
       
     </header>
