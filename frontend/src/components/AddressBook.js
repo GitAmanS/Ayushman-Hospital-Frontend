@@ -15,19 +15,19 @@ const AddressBook = () => {
     const [deleteConfirm, setDeleteConfirm] = useState(null); // State for delete confirmation
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        const fetchAddresses = async () => {
-            try {
-                const response = await axios.get('/api/address');
-                await setAddresses(response.data.addresses || []);
-                console.log(response.data.addresses)
-            } catch (err) {
-                console.error('Error fetching addresses:', err);
-                setError('Failed to fetch addresses');
-            }
-        };
-        fetchAddresses();
-    }, []);
+    // useEffect(() => {
+    //     const fetchAddresses = async () => {
+    //         try {
+    //             const response = await axios.get('/api/address');
+    //             await setAddresses(response.data.addresses || []);
+    //             console.log(response.data.addresses)
+    //         } catch (err) {
+    //             console.error('Error fetching addresses:', err);
+    //             setError('Failed to fetch addresses');
+    //         }
+    //     };
+    //     fetchAddresses();
+    // }, []);
 
     const addNewAddress = async () => {
         try {

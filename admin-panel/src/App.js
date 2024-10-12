@@ -2,7 +2,7 @@ import React from "react";
 import { Admin, Resource, ListGuesser, EditGuesser, Create } from "react-admin";
 import axios from "axios";
 import { SimpleForm, TextInput, ImageInput, ImageField } from 'react-admin';
-import { CategoryEdit, CategoryList } from "./components/Category";
+import { CategoryEdit, CategoryList,CreateCategory } from "./components/Category";
 import { ProductCreate, ProductEdit, ProductList } from "./components/Product";
 import { OrderEdit, OrderList } from "./components/Orders";
 
@@ -53,12 +53,13 @@ const dataProvider = {
   getList: (resource, params) => {
     return axios.get(`${apiUrl}/${resource}`, { withCredentials: true }) // Send cookies with the request
       .then((response) => {
-        console.log({data: response.data})
+ 
         return { data: response.data.data, total: response.data.total };
       });
   },
   getOne: (resource, params) => {
-    console.log("idof a single order:", params)
+    
+    console.log("id and userId params:", params)
     return axios.get(`${apiUrl}/${resource}/${params.id}`, { withCredentials: true }) // Send cookies with the request
       .then((response) => {
         console.log({ data: response.data.data })
@@ -66,7 +67,7 @@ const dataProvider = {
       });
   },
   create: (resource, params) => {
-    console.log("params:", params)
+
 
     const formData = new FormData();
 
@@ -88,7 +89,7 @@ const dataProvider = {
       });
   },
   update: (resource, params) => {
-    console.log("params:", params)
+    
 
     const formData = new FormData();
 
@@ -118,8 +119,6 @@ const dataProvider = {
   },
   // Add getMany method
   getMany: (resource, params) => {
-    console.log("params:", params)
-
     const config = {
       withCredentials: true, // Send cookies with the request
       data: { ids: params.ids } // Send the IDs in the request body
@@ -137,7 +136,7 @@ const dataProvider = {
   },
 
   deleteMany: (resource, params) => {
-    console.log("params:", params)
+
 
     const config = {
       withCredentials: true, // Send cookies with the request
@@ -148,7 +147,23 @@ const dataProvider = {
         data: params.ids // Return the deleted IDs
       }));
   },
-
+    // Custom methods for uploading test results and updating product status
+    uploadTestResult: async (orderId, productOrderId, testResult) => {
+      const formData = new FormData();
+      formData.append('testResult', testResult);
+      const { data } = await axios.post(`${apiUrl}/order/${orderId}/product/${productOrderId}/test-result`, formData, {
+          headers: {
+              'Content-Type': 'multipart/form-data',
+          },
+      });
+      return { data };
+  },
+  updateProductStatus: async (orderId, productOrderId, status) => {
+      const { data } = await axios.put(`${apiUrl}/order/${orderId}/product/${productOrderId}/status`, {
+          status,
+      });
+      return { data };
+  },
 };
 
 // Main App Component
@@ -157,7 +172,8 @@ const App = () => {
     <Admin authProvider={authProvider} dataProvider={dataProvider}>
       <Resource name="categories" list={CategoryList} create={CreateCategory} edit={CategoryEdit} />
       <Resource name="products" list={ProductList} create={ProductCreate} edit={ProductEdit} />
-      <Resource name="orders" list={OrderList} edit={OrderEdit}/>
+      <Resource name="orders" list={OrderList} edit={OrderEdit} />
+      <Resource name="users" list={ListGuesser} edit={EditGuesser} />
       <Resource name="admins" list={ListGuesser} create={CreateAdmin} />
       
     </Admin>
@@ -165,17 +181,7 @@ const App = () => {
 };
 
 // Category Create Component
-const CreateCategory = () => (
-  <Create>
-    <SimpleForm>
-      <TextInput source="name" />
-      <TextInput source="description" />
-      <ImageInput source="image" label="Related images" accept="image/*">
-        <ImageField source="src" title="title" />
-      </ImageInput>
-    </SimpleForm>
-  </Create>
-);
+
 
 // Category Edit Component
 const EditCategory = () => (

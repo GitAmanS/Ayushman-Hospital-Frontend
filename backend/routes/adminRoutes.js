@@ -3,7 +3,7 @@ const multer = require('multer');
 const path = require('path');
 const { Product, Category } = require('../models/Product'); // Update with your actual model paths
 const Admin = require('../models/Admin');
-const User = require('../models/User'); // Import User model
+const {User, Order} = require('../models/User'); // Import User model
 const adminAuth = require('../middleware/adminAuth'); // Middleware for admin authentication
 const jwt = require('jsonwebtoken'); // For generating JWT
 
@@ -375,26 +375,24 @@ router.post('/admins', async (req, res) => {
 
 //handle orders
 
-router.post('/order/:orderId/schedule/:productOrderId', async (req, res) => {
-    const { userId } = req.body; // Assume userId is sent in the request body
+// Route to schedule an order for a specific product
+router.post('/order/:orderId/product/:productOrderId/schedule', async (req, res) => {
+    const { userId, scheduledDate } = req.body; // Assume userId and scheduledDate are sent in the request body
     const { orderId, productOrderId } = req.params;
-
-    console.log("orderId", orderId, "productId", productOrderId)
-    const { scheduledDate } = req.body;
 
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).send('User not found.');
 
-        const response = await user.scheduleOrderDate(orderId, productOrderId, scheduledDate);
-        console.log("orderId", orderId, "productId", productOrderId, "scheduledDate:", scheduledDate)
+        const response = await user.scheduleProductOrderDate(orderId, productOrderId, scheduledDate);
         return res.status(200).json(response);
     } catch (error) {
         return res.status(500).send(error.message);
     }
 });
 
-router.put('/order/:orderId/process/:productOrderId', async (req, res) => {
+// Route to update the processing state of a specific product in an order
+router.put('/order/:orderId/product/:productOrderId/process', async (req, res) => {
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
@@ -402,7 +400,7 @@ router.put('/order/:orderId/process/:productOrderId', async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(404).send('User not found.');
 
-        const response = await user.setOrderToProcessing(orderId, productOrderId);
+        const response = await user.setProductOrderToProcessing(orderId, productOrderId);
         return res.status(200).json(response);
     } catch (error) {
         return res.status(500).send(error.message);
@@ -434,13 +432,12 @@ const uploadPDF = multer({
     fileFilter: pdfFilter
 });
 
-// Route to upload test result (PDF)
-router.post('/order/:orderId/test-result/:productOrderId', uploadPDF.single('testResult'), async (req, res) => {
+// Route to upload a test result (PDF) for a specific product in an order
+router.post('/order/:orderId/product/:productOrderId/test-result', uploadPDF.single('testResult'), async (req, res) => {
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
     try {
-        // Validate user and request
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
@@ -449,8 +446,8 @@ router.post('/order/:orderId/test-result/:productOrderId', uploadPDF.single('tes
         // Get the uploaded file path
         const testResultPath = req.file.path.replace(/\\/g, '/'); // Use forward slashes for consistency
 
-        // Update the user's order with the test result link
-        const response = await user.uploadTestResult(orderId, productOrderId, testResultPath);
+        // Update the user's order with the test result link for the specific product
+        const response = await user.uploadTestResultForProduct(orderId, productOrderId, testResultPath);
 
         res.status(200).json({ message: 'Test result uploaded successfully', testResultPath });
     } catch (error) {
@@ -458,13 +455,12 @@ router.post('/order/:orderId/test-result/:productOrderId', uploadPDF.single('tes
     }
 });
 
-
+// Get all orders
 router.get('/orders', async (req, res) => {
     try {
         const users = await User.find().populate('orders.products.productId'); // Populate product details
         const allOrders = users.flatMap(user => 
             user.orders.map(order => ({
-                // Include only necessary properties from the order
                 id: order._id, // Assuming each order has an ID
                 products: order.products, // Include the products array
                 status: order.status, // Include other order-specific fields as needed
@@ -473,50 +469,44 @@ router.get('/orders', async (req, res) => {
             }))
         );
 
-        const olorders = users.flatMap(user=>
-            user.orders.map(order =>({
-                order
-            }))
-        )
-        res.status(200).json({data:allOrders, total: allOrders.length});
+        res.status(200).json({ data: allOrders, total: allOrders.length });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 });
 
-
+// Route to get user details and their orders
 router.get('/orderuser', async (req, res) => {
-    const { userId } = await req.body;
-    console.log("userID:", userId)
+    const { userId } = req.body; // Assume userId is sent in the request body
     try {
-        const user = await User.findOne({ userId });
-
+        const user = await User.findById(userId).populate('orders.products.productId'); // Populate orders with product details
         res.status(200).json(user);
     } catch (error) {
-        res.status(500).json({ msessage: error.message });
+        res.status(500).json({ message: error.message });
     }
 });
 
-// Route to get a single order
+// Route to get a single order and its products
 router.get('/orders/:orderId', async (req, res) => {
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId } = req.params;
 
     try {
-        const user = await User.findById(userId);
+        // Find the user by userId
+        const user = await User.findById(userId).populate('orders.products.productId');
         if (!user) return res.status(404).json({ message: 'User not found.' });
 
-        // Find the order based on the orderId and productOrderId
-        const order = user.orders.id(orderId);
+        // Find the order in the user's orders
+        const order = user.orders.find(order => order._id.toString() === orderId); // Use toString() to match ObjectId
+
+        // Check if the order exists
         if (!order) return res.status(404).json({ message: 'Order not found.' });
 
-        // const product = order.products.id(productOrderId);
-        // if (!product) return res.status(404).json({ message: 'Product order not found.' });
-
-        // Return the specific order and product details
+        // Return the specific order details
         return res.status(200).json(order);
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        console.error('Error fetching order:', error); // Log the error for debugging
+        return res.status(500).json({ message: 'Internal server error.' });
     }
 });
 

@@ -2,31 +2,40 @@ import React, { useState, useRef, useContext, useEffect } from "react";
 import { MaterialSymbolsClose } from "../icons/MaterialSymbolsClose";
 import { Link } from "react-router-dom";
 import { UserContext } from "../Context/UserContext";
+
+
+
 const OTPInput = ({ length = 6, value, onChange }) => {
   const inputs = useRef([]);
 
   const handleChange = (e, index) => {
     const { value: inputValue } = e.target;
-    // Allow only single digit input
-    if (inputValue.match(/^\d$/)) {
-      const newOtp = value.split(""); // Use the current value to update
-      newOtp[index] = inputValue; // Update the current index with the input value
-      onChange(newOtp.join("")); // Call onChange with the updated value
 
-      // Move focus to the next input
+    if (inputValue.match(/^\d$/)) {
+      const newOtp = value.split("");
+      newOtp[index] = inputValue;
+      onChange(newOtp.join(""));
+
+      // Move to the next input
       if (index < length - 1) {
         inputs.current[index + 1].focus();
       }
     }
+  };
 
-    // Move focus to previous input on backspace
-    if (inputValue === "" && index > 0) {
-      const newOtp = value.split(""); // Use the current value
-      newOtp[index] = ""; // Clear the current index
-      onChange(newOtp.join("")); // Call onChange with the updated value
-      inputs.current[index - 1].focus(); // Focus the previous input
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (value[index]) {
+        const newOtp = value.split("");
+        newOtp[index] = ""; // Clear current input
+        onChange(newOtp.join(""));
+      } else if (index > 0) {
+        inputs.current[index - 1].focus(); // Move to previous input if empty
+      }
     }
   };
+
+  const handleFocus = (e) => e.target.select(); // Select the input content when focused
 
   return (
     <div style={{ display: 'flex' }}>
@@ -38,8 +47,10 @@ const OTPInput = ({ length = 6, value, onChange }) => {
             type="text"
             maxLength="1"
             ref={(el) => (inputs.current[index] = el)}
-            value={value[index] || ""} // Set the value from the prop
+            value={value[index] || ""}
             onChange={(e) => handleChange(e, index)}
+            onKeyDown={(e) => handleKeyDown(e, index)}
+            onFocus={handleFocus}
             style={{
               width: '40px',
               height: '40px',
@@ -54,6 +65,7 @@ const OTPInput = ({ length = 6, value, onChange }) => {
     </div>
   );
 };
+
 const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otp, setOtp] = useState("");

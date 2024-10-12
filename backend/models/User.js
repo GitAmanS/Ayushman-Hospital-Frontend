@@ -354,4 +354,7 @@ userSchema.methods.uploadTestResult = async function (orderId, productOrderId, t
     };
 };
 
-module.exports = mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
+const Order = mongoose.model('Order', orderSchema)
+
+module.exports = {User, Order}

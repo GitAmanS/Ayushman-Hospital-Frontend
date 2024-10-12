@@ -8,6 +8,7 @@ import { MdiAddressMarkerOutline } from './icons/MdiAddressMarkerOutline';
 import LoginSlidingSection from './slidingSections/LoginSlidingSection';
 import { UserContext } from './Context/UserContext';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify'; 
 const Profile = () => {
     const {user , isNewUser, setIsNewUser} = useContext(UserContext)
     const [isSlidingOpen, setIsSlidingOpen] = useState(false);
@@ -20,7 +21,14 @@ const Profile = () => {
 
 
     const navigateTo= (address)=>{
-        navigate(address)
+        if(!user){
+            console.log("it's working")
+            toast.error("Please sign in to continue!");
+        }else{
+            console.log("its not working")
+            navigate(address)
+        }
+        
     }
     useEffect(() => {
         // Lock or unlock scroll
@@ -48,8 +56,8 @@ const Profile = () => {
             <button onClick={toggleSlide} className='font-bold w-full px-auto mt-2  py-2 text-white bg-red-500 rounded-lg'>Sign in</button></div>}
         </div>
 
-        <div onClick={()=>{navigateTo("/orders")}} className='flex flex-col justify-center border-b-8 border-gray-100 py-3'>
-            <div className='flex flex-row px-4'>
+        <div  className='flex flex-col justify-center border-b-8 border-gray-100 py-3'>
+            <div onClick={()=>{navigateTo("/orders")}} className='flex flex-row px-4'>
                 <div className='flex justify-center items-center mr-4 text-xl'>
                     <SolarCart5BoldDuotone/>
                 </div>

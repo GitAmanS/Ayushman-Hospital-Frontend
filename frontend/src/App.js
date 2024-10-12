@@ -16,10 +16,13 @@ import CategoriesPage from './components/CategoriesPage.js';
 import ProfileDetailsPage from './components/ProfileDetailsPage.js';
 import AddressBook from './components/AddressBook.js';
 import OrderPage from './components/OrderPage.js';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 function App() {
   return (
     <div className='open-sans'>
-                <Router>
+      <ToastContainer />
+          <Router>
           <UserProvider>
 
             <Routes>

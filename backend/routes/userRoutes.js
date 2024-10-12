@@ -1,7 +1,7 @@
 const express = require('express');
 const authenticateUser = require('../middleware/authenticateUser'); // Middleware for user authentication
 const { Category, Product } = require('../models/Product'); // Assuming you have a Product model
-const User = require('../models/User'); // User model
+const {User} = require('../models/User'); // User model
 const Razorpay = require('razorpay');
 const { createRazorpayOrder } = require('../utils/razorpay');  
 const crypto = require('crypto');

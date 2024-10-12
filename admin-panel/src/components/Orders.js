@@ -1,65 +1,36 @@
-// OrderList.js
 import React from 'react';
-import {
-    List,
-    Datagrid,
-    TextField,
-    ReferenceField,
-    EditButton,
-    ShowButton,
-} from 'react-admin';
+import { ArrayField, ChipField, Datagrid, List, ReferenceField, SingleFieldList, TextField } from 'react-admin';
 
-import {
-    Edit,
-    SimpleForm,
-    TextInput,
-    ArrayInput,
-    SimpleFormIterator,
-    FileInput,
-    FileField,
-} from 'react-admin';
+import { ArrayInput, DateInput, Edit, NumberInput, ReferenceInput, SimpleForm, SimpleFormIterator, TextInput } from 'react-admin';
+
+export const OrderList = () => (
+    <List>
+        <Datagrid >
+            <TextField source="id" />
+            <ArrayField source="products"><SingleFieldList><ChipField source="title" /></SingleFieldList></ArrayField>
+            <ReferenceField source="userId" reference="orders" />
+            <TextField source='userId'/>
+            <TextField source="userPhone" />
+        </Datagrid>
+    </List>
+);
 
 
-export const OrderList = (props) => {
-    return (
-        <List {...props}>
-            <Datagrid>
-                <TextField source="id" />
-                <TextField source="userId" />
-                <TextField source="userPhone" />
-                <EditButton basePath="/orders" />
-                <ShowButton basePath="/orders" />
-            </Datagrid>
-        </List>
-    );
-};
-
-
-
-
-
-export const OrderEdit = (props) => {
-    return (
-        <Edit {...props}>
-            <SimpleForm>
-                <TextInput source="userId" />
-                <TextInput source="userPhone" />
-                <ArrayInput source="products">
-                    <SimpleFormIterator>
-                        <TextInput source="title" />
-                        <TextInput source="quantity" />
-                        <TextInput source="price" />
-                        <TextInput source="productStatus" />
-                        <TextInput source="scheduledDate" />
-                        <FileInput source="testResults" label="Upload Test Results">
-                            <FileField source="testResults" title="testResults" />
-                        </FileInput>
-                    </SimpleFormIterator>
-                </ArrayInput>
-            </SimpleForm>
-        </Edit>
-    );
-};
-
-
-
+export const OrderEdit = () => (
+    <Edit>
+        <SimpleForm>
+            <TextInput source="id" />
+            <ArrayInput source="products"><SimpleFormIterator><TextInput source="title" />
+            <ReferenceInput source="productId" reference="products" />
+            <NumberInput source="quantity" />
+            <NumberInput source="price" />
+            <TextInput source="image" />
+            <TextInput source="productStatus" />
+            <ReferenceInput source="_id" reference="s" />
+            <TextInput source="testResults" />
+            <DateInput source="scheduledDate" /></SimpleFormIterator></ArrayInput>
+            <ReferenceInput source="userId" reference="users" />
+            <TextInput source="userPhone" />
+        </SimpleForm>
+    </Edit>
+);

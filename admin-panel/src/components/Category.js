@@ -1,7 +1,20 @@
 
-import { Datagrid, ImageInput,FileInput,ImageField,useNotify, DateField,useGetList, List,ReferenceField , TextField, Edit, SimpleForm, TextInput, DateInput, FileField } from 'react-admin';
+import { Datagrid,Create, ImageInput,FileInput,ImageField,useNotify, DateField,useGetList, List,ReferenceField , TextField, Edit, SimpleForm, TextInput, DateInput, FileField } from 'react-admin';
 
 import { useRefresh } from 'react-admin';
+
+
+export const CreateCategory = () => (
+    <Create>
+      <SimpleForm>
+        <TextInput source="name" />
+        <TextInput source="description" />
+        <ImageInput source="image" label="Related images" accept="image/*">
+          <ImageField source="src" title="title" />
+        </ImageInput>
+      </SimpleForm>
+    </Create>
+  );
 
 export const CategoryList = () => {
     const { data, loading, error } = useGetList('categories');

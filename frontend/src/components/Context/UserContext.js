@@ -36,6 +36,7 @@ export const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [mostBookedProductIds, setMostBookedProductIds] = useState([]);
   const [cartProducts, setCartProducts] = useState([]);
   const [isOtpVerified, setIsOtpVerified] = useState(false); // To track OTP verification
   const [isNewUser, setIsNewUser] = useState(false); // To track if user is new

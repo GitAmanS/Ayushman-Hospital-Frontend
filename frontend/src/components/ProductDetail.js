@@ -1,19 +1,23 @@
 // src/components/ProductDetail.js
 import React, { useContext } from 'react';
 import { useParams } from 'react-router-dom';
-import items from './items.json'; // Import your items.json file
+
 import { UserContext } from './Context/UserContext';
 
 const ProductDetail = () => {
   const { productId } = useParams(); // Get the product ID from the URL
-  const {user} = useContext(UserContext)
+  console.log("productId:",productId)
+  const {user, categories, addItemToCart} = useContext(UserContext)
   // Function to find product by ID
   const findProductById = (id) => {
     let foundProduct = null;
-    items.categories.forEach((category) => {
-      const productItem = category.products.find((product) => product.product_id === parseInt(id));
+    categories.forEach((category) => {
+      const productItem = category.products.find((product) => product._id === id);
       if (productItem) {
         foundProduct = productItem;
+        console.log("product found")
+      }else{
+        console.log("productnotfound")
       }
     });
     return foundProduct;
@@ -26,13 +30,26 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="p-6">
+    <div className="p-6 pb-12 pt-24">
       <h1 className="text-2xl font-bold mb-4">{product.title}</h1>
-      <img src={product.image} alt={product.title} className="w-full h-64 object-cover mb-4" />
+      <img src={`/${product.image}`} alt={product.title} className="w-full rounded h-64 object-cover mb-4" />
       <p className="mb-2">{product.desc}</p>
       <p className="font-medium">Reports within: {product.reports_within}</p>
       <p className="font-medium">Tests included: {product.contains_tests}</p>
-      <p className="text-blue-600 font-bold mt-4">Price: ₹{product.price}</p>
+
+
+      <div className='flex flex-row'>
+      <p className="text-black font-bold mt-4">Price: ₹{product.price}</p>
+      <button
+                onClick={() => {
+                  addItemToCart(product._id);
+                }}
+                className="flex text-sm justify-center items-center rounded-lg border font-semibold ml-auto text-red-500 shadow-md p-3"
+              >
+                ADD TO CART
+              </button>
+      </div>
+
     </div>
   );
 };
