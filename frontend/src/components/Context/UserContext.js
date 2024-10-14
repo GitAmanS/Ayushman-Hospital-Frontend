@@ -63,6 +63,26 @@ export const UserProvider = ({ children }) => {
     }
   }
 
+
+
+  useEffect(() => {
+    // Fetch orders from the backend
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get('/api/orders', {
+          withCredentials: true, // Send cookies along with the request
+        });
+        const data = response.data.orders;
+        console.log("orders:", data);
+        setOrders(data);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
+
+    fetchOrders();
+  }, [setOrders]);
+
   
 
   // Effect to retrieve user from local storage on mount

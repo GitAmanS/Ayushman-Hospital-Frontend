@@ -3,7 +3,25 @@ const bcrypt = require('bcrypt');
 
 const adminSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true },
-    password: { type: String, required: true }
+    password: { type: String, required: true },
+
+    // Role for hierarchical structure: 'superadmin' or 'admin'
+    role: {
+        type: String,
+        enum: ['superadmin', 'admin'],
+        default: 'admin'
+    },
+
+    // Admin status: active, suspended, or deleted
+    status: {
+        type: String,
+        enum: ['active', 'suspended', 'deleted'],
+        default: 'active'
+    },
+
+
+    // Creation timestamp
+    createdAt: { type: Date, default: Date.now }
 });
 
 // Instance method to hash password

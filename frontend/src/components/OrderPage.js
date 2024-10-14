@@ -5,23 +5,7 @@ import { UserContext } from './Context/UserContext';
 const OrderPage = () => {
   const { orders, setOrders, clearOrders } = useContext(UserContext);
 
-  useEffect(() => {
-    // Fetch orders from the backend
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get('http://localhost:5000/api/orders', {
-          withCredentials: true, // Send cookies along with the request
-        });
-        const data = response.data.orders;
-        console.log("orders:", data);
-        setOrders(data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      }
-    };
 
-    fetchOrders();
-  }, [setOrders]);
 
   const getStepStatus = (status) => {
     switch (status) {
@@ -39,7 +23,7 @@ const OrderPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 md:mt-24">
+    <div className="container mx-auto p-4 mt-24">
       <h1 className="text-2xl font-bold mb-4">Your Orders</h1>
       <button onClick={clearOrders} className="mb-4 p-2 bg-red-500 text-white rounded">Clear Orders</button>
       <div className="space-y-4">

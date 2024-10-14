@@ -6,6 +6,7 @@ const Admin = require('../models/Admin');
 const {User, Order} = require('../models/User'); // Import User model
 const adminAuth = require('../middleware/adminAuth'); // Middleware for admin authentication
 const jwt = require('jsonwebtoken'); // For generating JWT
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -30,6 +31,8 @@ router.post('/login', async (req, res) => {
         if (!admin) {
             return res.status(404).json({ message: 'Admin not found' });
         }
+
+        console.log(admin)
 
         const isMatch = await admin.comparePassword(password);
         if (!isMatch) {
@@ -343,25 +346,7 @@ router.delete('/products', adminAuth, async (req, res) => {
     }
 });
 
-// Route to add a new admin
-router.post('/admins', async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        const existingAdmin = await Admin.findOne({ username });
-        if (existingAdmin) {
-            return res.status(400).json({ message: 'Admin already exists' });
-        }
 
-        const newAdmin = new Admin({ username });
-        newAdmin.password = await newAdmin.hashPassword(password); // Hash the password before saving
-        await newAdmin.save();
-
-        res.status(201).json({ message: 'New admin created successfully', admin: { username: newAdmin.username } });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ message: 'Error creating admin', error: err });
-    }
-});
 
 
 
@@ -376,15 +361,16 @@ router.post('/admins', async (req, res) => {
 //handle orders
 
 // Route to schedule an order for a specific product
-router.post('/order/:orderId/product/:productOrderId/schedule', async (req, res) => {
-    const { userId, scheduledDate } = req.body; // Assume userId and scheduledDate are sent in the request body
+router.post('/orders/:orderId/product/:productOrderId/schedule', async (req, res) => {
+    console.log("body:", req.body)
+    const { userId, scheduledDate } = req.body.data; // Assume userId and scheduledDate are sent in the request body
     const { orderId, productOrderId } = req.params;
 
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).send('User not found.');
 
-        const response = await user.scheduleProductOrderDate(orderId, productOrderId, scheduledDate);
+        const response = await user.scheduleOrderDate(orderId, productOrderId, scheduledDate);
         return res.status(200).json(response);
     } catch (error) {
         return res.status(500).send(error.message);
@@ -392,20 +378,23 @@ router.post('/order/:orderId/product/:productOrderId/schedule', async (req, res)
 });
 
 // Route to update the processing state of a specific product in an order
-router.put('/order/:orderId/product/:productOrderId/process', async (req, res) => {
-    const { userId } = req.body; // Assume userId is sent in the request body
+router.put('/orders/:orderId/product/:productOrderId/process', async (req, res) => {
+    const { userId } = req.body.data; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).send('User not found.');
 
-        const response = await user.setProductOrderToProcessing(orderId, productOrderId);
+        const response = await user.setOrderToProcessing(orderId, productOrderId);
         return res.status(200).json(response);
     } catch (error) {
+        console.log(error.message)
         return res.status(500).send(error.message);
     }
 });
+
+
 
 // Update multer to accept PDF uploads
 const pdfStorage = multer.diskStorage({
@@ -433,7 +422,8 @@ const uploadPDF = multer({
 });
 
 // Route to upload a test result (PDF) for a specific product in an order
-router.post('/order/:orderId/product/:productOrderId/test-result', uploadPDF.single('testResult'), async (req, res) => {
+router.post('/orders/:orderId/product/:productOrderId/test-result', uploadPDF.single('testResult'), async (req, res) => {
+    console.log(req.body)
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
@@ -445,12 +435,18 @@ router.post('/order/:orderId/product/:productOrderId/test-result', uploadPDF.sin
 
         // Get the uploaded file path
         const testResultPath = req.file.path.replace(/\\/g, '/'); // Use forward slashes for consistency
+        console.log(testResultPath)
+
+        const TestResult = {
+            pdfLink: testResultPath
+        }
 
         // Update the user's order with the test result link for the specific product
-        const response = await user.uploadTestResultForProduct(orderId, productOrderId, testResultPath);
+        const response = await user.uploadTestResult(orderId, productOrderId, TestResult);
 
         res.status(200).json({ message: 'Test result uploaded successfully', testResultPath });
     } catch (error) {
+        console.log(error.message)
         return res.status(500).json({ message: error.message });
     }
 });
@@ -463,9 +459,10 @@ router.get('/orders', async (req, res) => {
             user.orders.map(order => ({
                 id: order._id, // Assuming each order has an ID
                 products: order.products, // Include the products array
-                status: order.status, // Include other order-specific fields as needed
                 userId: user._id, // Add user ID
-                userPhone: user.phone // Add user phone
+                userPhone: user.phone, // Add user phone
+                address: order.address,
+                totalAmount: order.total,
             }))
         );
 
@@ -488,28 +485,48 @@ router.get('/orderuser', async (req, res) => {
 
 // Route to get a single order and its products
 router.get('/orders/:orderId', async (req, res) => {
-    const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId } = req.params;
+    console.log("order id:", orderId)
 
     try {
-        // Find the user by userId
-        const user = await User.findById(userId).populate('orders.products.productId');
-        if (!user) return res.status(404).json({ message: 'User not found.' });
+        // Use mongoose.Types.ObjectId to convert orderId
+        const userWithOrder = await User.findOne({
+            orders: { 
+                $elemMatch: { _id: new mongoose.Types.ObjectId(orderId) } // Use `new mongoose.Types.ObjectId(orderId)` if necessary
+            }
+        });
 
-        // Find the order in the user's orders
-        const order = user.orders.find(order => order._id.toString() === orderId); // Use toString() to match ObjectId
+        if (!userWithOrder) {
+            console.log("order not found")
+            return res.status(404).json({ message: 'Order not found.' });
+        }
 
+
+        // Extract the specific order using the orderId
+        const order = userWithOrder.orders.id(orderId); // Ensure this is valid
         // Check if the order exists
-        if (!order) return res.status(404).json({ message: 'Order not found.' });
+        
+        if (!order) {
+            console.log("order not found")
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+      
 
         // Return the specific order details
-        return res.status(200).json(order);
+                // Include userId in the response along with the order data
+                return res.status(200).json({
+                    data: {
+                        userId: userWithOrder._id, // Include the user's ID
+                        ...order.toObject(),       // Spread the order details
+                        id: order._id              // Ensure the order ID is included
+                    }
+                });
     } catch (error) {
         console.error('Error fetching order:', error); // Log the error for debugging
         return res.status(500).json({ message: 'Internal server error.' });
     }
 });
-
 
 
 router.get('/check-auth',adminAuth,  async(req,res)=>{
@@ -523,6 +540,216 @@ router.get('/check-auth',adminAuth,  async(req,res)=>{
         res.status(500).json({message:err.message})
     }
 })
+
+
+// Route to get all users
+router.get('/users', adminAuth, async (req, res) => {
+    try {
+        const users = await User.find(); // Fetch all users from the database
+        res.status(200).json({
+            data: users.map(user => ({
+                id: user._id,
+                email: user.email,
+                joinedAt: user.joinedAt, 
+                phone:user.phone,
+                address: user.address
+            })),
+            total: users.length
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching users', error: err.message });
+    }
+});
+
+// Route to delete a user by ID
+router.delete('/users/:id', adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const user = await User.findByIdAndDelete(id); // Delete user by ID
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting user', error: err.message });
+    }
+});
+
+// Route to delete multiple users by an array of IDs
+router.delete('/users', adminAuth, async (req, res) => {
+    const { ids } = req.body; // Accept array of user IDs in the request body
+    if (!ids || ids.length === 0) {
+        return res.status(400).json({ message: 'No user IDs provided' });
+    }
+    
+    try {
+        // Delete multiple users using deleteMany
+        const result = await User.deleteMany({ _id: { $in: ids } });
+        
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'No users found with the provided IDs' });
+        }
+        
+        res.status(200).json({
+            message: `${result.deletedCount} user(s) deleted successfully`,
+            deletedCount: result.deletedCount
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting users', error: err.message });
+    }
+});
+
+
+
+// Route to add a new admin
+router.post('/admins', async (req, res) => {
+    const { username, password, role } = req.body.params.data;
+    
+    console.log("req:", req.body)
+    try {
+        const existingAdmin = await Admin.findOne({ username });
+        if (existingAdmin) {
+            return res.status(400).json({ message: 'Admin already exists' });
+        }
+
+        const newAdmin = new Admin({ username, role });
+        newAdmin.password = await newAdmin.hashPassword(password); // Hash the password before saving
+        await newAdmin.save();
+
+        res.status(201).json({ message: 'Admin created successfully', id: newAdmin._id });
+        // res.status(201).json({ message: 'New admin created successfully', admin: { username: newAdmin.username } });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ message: 'Error creating admin', error: err });
+    }
+});
+
+
+// // Route to create a new admin (register)
+// router.post('/admins', async (req, res) => {
+//     const { username, password } = req.body; // Get username and password from request body
+
+//     try {
+//         const existingAdmin = await Admin.findOne({ username });
+//         if (existingAdmin) {
+//             return res.status(400).json({ message: 'Admin already exists' });
+//         }
+
+//         const admin = new Admin({ username, password }); // Create a new Admin instance
+
+//         // Save the admin and return response
+//         await admin.save();
+        
+//     } catch (err) {
+//         res.status(500).json({ message: 'Error creating admin', error: err });
+//     }
+// });
+
+
+
+// Route to get all admins
+router.get('/admins', adminAuth, async (req, res) => {
+    try {
+        const admins = await Admin.find();
+        
+        // Transform admins to include id field
+        const adminsWithId = admins.map(admin => ({
+            ...admin.toObject(), // Convert Mongoose document to plain object
+            id: admin._id.toString() // Add 'id' field mapped from '_id'
+        }));
+
+
+        res.status(200).json({
+            data: adminsWithId, // Admins data with 'id' field included
+            total: adminsWithId.length // Total number of admins
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching admins', error: err });
+    }
+});
+
+
+// Route to delete a single admin by ID
+router.delete('/admins/:id', adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const admin = await Admin.findByIdAndDelete(id);
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        res.status(200).json({ message: 'Admin deleted successfully' });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting admin', error: err });
+    }
+});
+
+// Route to delete multiple admins
+router.delete('/admins', adminAuth, async (req, res) => {
+    const { ids } = req.body; // Array of admin IDs to delete
+    try {
+        const result = await Admin.deleteMany({ _id: { $in: ids } });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ message: 'No admins found for deletion' });
+        }
+
+        res.status(200).json({ message: `${result.deletedCount} admins deleted successfully` });
+    } catch (err) {
+        res.status(500).json({ message: 'Error deleting admins', error: err });
+    }
+});
+
+// Route to get one admin by ID (getOne)
+router.get('/admins/:id', adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const admin = await Admin.findById(id);
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+        res.status(200).json({ data: { ...admin, id: admin._id } });
+
+    } catch (err) {
+        res.status(500).json({ message: 'Error fetching admin', error: err });
+    }
+});
+
+
+router.post('/logout', (req, res) => {
+    // Clear the 'token' cookie
+    res.clearCookie('token'); // This should match the cookie name you are using
+    res.status(200).json({ message: 'Logged out successfully' });
+});
+
+
+router.get('/checkRole', adminAuth, async (req, res) => {
+
+    try {
+        // Check if the admin's role is "superadmin"
+        console.log(req.admin)
+        if (req.admin.role !== "superadmin") {
+            // Return a 403 Forbidden status if not superadmin
+            return res.status(200).json({ message: 'Access denied: You do not have the required permissions.', role:req.admin.role });
+        }
+
+        // If the role is superadmin, respond with a success message
+        return res.status(200).json({ message: 'Access granted: You are a superadmin.', role:req.admin.role });
+    } catch (error) {
+        console.error(error);
+        // Handle any other errors
+        return res.status(500).json({ message: 'An error occurred while checking role.', error });
+    }
+});
+
+
+router.get('/check-auth', adminAuth, async (req, res) => {
+
+
+        return res.status(200).json({ message: 'Access granted: You are a superadmin.', role:req.admin.role });
+
+});
+
+
 
 
 

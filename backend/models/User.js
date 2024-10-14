@@ -4,9 +4,7 @@ const { Product } = require('./Product');
 
 // Define the TestResult schema
 const testResultSchema = new mongoose.Schema({
-    test: { type: String, required: true },
     date: { type: Date, default: Date.now },
-    result: { type: String, required: true },
     pdfLink: { type: String, required: true }, // Link to the PDF report
 });
 

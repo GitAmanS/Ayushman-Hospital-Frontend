@@ -1,11 +1,12 @@
-import React from 'react';
-import { List, Datagrid, TextField, EmailField } from 'react-admin';
+import { ArrayField, ChipField, Datagrid, DateField, EmailField, List, SingleFieldList, TextField } from 'react-admin';
 
-export const UserList = props => (
-    <List {...props}>
+export const UserList = () => (
+    <List>
         <Datagrid>
-            <TextField source="name" />
+            <TextField source="id" />
             <EmailField source="email" />
+            <DateField source="joinedAt" />
+            <TextField source="phone" />
         </Datagrid>
     </List>
 );

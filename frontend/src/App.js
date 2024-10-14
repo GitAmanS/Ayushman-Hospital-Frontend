@@ -18,6 +18,7 @@ import AddressBook from './components/AddressBook.js';
 import OrderPage from './components/OrderPage.js';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import TestResultPage from './components/TestResultPage.js';
 function App() {
   return (
     <div className='open-sans'>
@@ -36,6 +37,7 @@ function App() {
               <Route path="/profiledetails" element={<Body element={<ProfileDetailsPage />} showFooter={false}/>} />
               <Route path='/addressbook' element={<Body element={<AddressBook/>} showFooter={false}/>} />
               <Route path='/orders' element= { <Body element={<OrderPage/>} showFooter={false}/>} />
+              <Route path='/testresults' element= { <Body element={<TestResultPage/>} showFooter={false}/>} />
               {/* <Route path="/service/:id" element={} /> */}
             </Routes>
   

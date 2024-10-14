@@ -70,7 +70,7 @@ const Profile = () => {
             </div>
 
 
-            <div className='flex flex-row px-4'>
+            <div className='flex flex-row px-4' onClick={()=>{navigateTo("/testresults")}}>
                 <div className='flex justify-center items-center mr-4 text-xl'>
                     <FluentMdl2TestPlan/>
                 </div>
