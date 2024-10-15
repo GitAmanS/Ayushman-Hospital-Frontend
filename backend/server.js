@@ -32,38 +32,38 @@ app.use('/api', userRoutes)
 
 app.use('/uploads', express.static('uploads'));
 
-// // Serve static files from the React app
-// app.use(express.static(path.join(__dirname, '../frontend/build')));
-// app.use(express.static(path.join(__dirname, '../admin-panel/build')));
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, './frontend/build')));
+app.use(express.static(path.join(__dirname, './admin-panel/build')));
 
-// // Serve the admin panel on the /admin path
-// app.get('/admin/*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../admin-panel/build', 'index.html'));
-// });
-
-// // Serve the frontend on the root path
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
-// });
-
-app.use(express.static(path.resolve(__dirname, 'admin-panel', 'build')));
-app.get("/admin/*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'admin-panel', 'build', 'index.html'), function (err) {
-    if (err) {
-      res.status(500).send(err);
-    }
-  });
+// Serve the admin panel on the /admin path
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(__dirname, './admin-panel/build', 'index.html'));
 });
 
-// Serve the frontend on all other paths
-app.use(express.static(path.resolve(__dirname, 'frontend', 'build')));
-app.get("*", (req, res) => {
-  res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'), function (err) {
-    if (err) {
-      res.status(500).send(err);
-    }
-  });
+// Serve the frontend on the root path
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './frontend/build', 'index.html'));
 });
+
+// app.use(express.static(path.resolve(__dirname, 'admin-panel', 'build')));
+// app.get("/admin/*", (req, res) => {
+//   res.sendFile(path.resolve(__dirname, 'admin-panel', 'build', 'index.html'), function (err) {
+//     if (err) {
+//       res.status(500).send(err);
+//     }
+//   });
+// });
+
+// // Serve the frontend on all other paths
+// app.use(express.static(path.resolve(__dirname, 'frontend', 'build')));
+// app.get("*", (req, res) => {
+//   res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'), function (err) {
+//     if (err) {
+//       res.status(500).send(err);
+//     }
+//   });
+// });
 
 // Start the server
 const PORT = process.env.PORT || 5000;
