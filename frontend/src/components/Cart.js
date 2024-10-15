@@ -74,7 +74,9 @@ const Cart = () => {
   return (
     <div className='open-sans flex flex-col min-h-screen '>
         <div className='flex flex-row items-center p-4 border-b md:px-36 gap-4'>
-            <BackButton/>
+        <button onClick={()=>{navigate("/")}} className='bg-gray-100 p-3 rounded-full'>
+        <IoMdArrowRoundBack />
+      </button>
             <h1 className='font-bold'>Cart</h1>
         </div>
         <div className='p-4 flex flex-col justify-end  md:px-36'>

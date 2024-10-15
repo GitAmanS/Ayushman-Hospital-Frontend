@@ -51,7 +51,7 @@ export const UserProvider = ({ children }) => {
   const fetchCart = async()=>{
     try {
     
-      const response = await axios.get('http://localhost:5000/api/cart', {
+      const response = await axios.get('/api/cart', {
         withCredentials: true, // Send cookies along with the request
       });
       console.log("cart recieved:",response.data.cart)
@@ -180,7 +180,7 @@ const addItemToCart = async (productId) => {
   // Send request to the backend to update the cart in the database
   try {
     
-    const response = await axios.post('http://localhost:5000/api/cart/add', 
+    const response = await axios.post('/api/cart/add', 
       { productId, quantity: 1 }, // Data to send
       { withCredentials: true } // Sending cookies
     );
@@ -212,7 +212,7 @@ const decreaseItemQuantity = async (productId) => {
   // Send request to the backend to update the cart in the database
   try {
     console.log("product id", productId)
-    const response = await axios.post('http://localhost:5000/api/cart/remove', 
+    const response = await axios.post('/api/cart/remove', 
       { productId, quantity: 1 }, // Data to send
       { withCredentials: true } // Sending cookies
     );
@@ -228,7 +228,7 @@ const decreaseItemQuantity = async (productId) => {
 
 const clearCart = async()=>{
   try {
-    const response = await axios.post('http://localhost:5000/api/cart/clear', 
+    const response = await axios.post('/api/cart/clear', 
       {}, 
       { withCredentials: true } // Sending cookies
     );

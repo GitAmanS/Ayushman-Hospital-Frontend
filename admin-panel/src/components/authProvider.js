@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiUrl = "http://localhost:5000/api/admin";
+const apiUrl = "/api/admin";
 const authProvider = {
   login: async ({ username, password }) => {
     const response = await axios.post(`${apiUrl}/login`, { username, password }, { withCredentials: true });

@@ -84,7 +84,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
 
   // const handleGetVerificationCode = async() => {
   //   const phone =91+phoneNumber.toString()
-  //   const response = await fetch('http://localhost:5000/api/auth/request-otp', {
+  //   const response = await fetch('/api/auth/request-otp', {
   //     method: 'POST',
   //     headers: { 'Content-Type': 'application/json' },
   //     body: JSON.stringify({ phone }),
@@ -101,7 +101,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
 
   // const submitEmail = async() =>{
   //   try{
-  //     const response = await fetch('http://localhost:5000/api/auth/submitemail', {
+  //     const response = await fetch('/api/auth/submitemail', {
   //       method: 'POST',
   //       headers: { 'Content-Type': 'application/json' },
   //       body: JSON.stringify({ email }),
@@ -129,7 +129,7 @@ const LoginSlidingSection = ({ isOpen, toggleSlide }) => {
   //   const phone = `91${phoneNumber.toString()}`; // Ensure phone number format is correct
   
   //   try {
-  //     const response = await fetch('http://localhost:5000/api/auth/verify-otp', {
+  //     const response = await fetch('/api/auth/verify-otp', {
   //       method: 'POST',
   //       headers: { 'Content-Type': 'application/json' },
   //       body: JSON.stringify({ phone, otp }),

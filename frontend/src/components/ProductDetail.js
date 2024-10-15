@@ -30,7 +30,7 @@ const ProductDetail = () => {
   }
 
   return (
-    <div className="p-6 pb-12 pt-24">
+    <div className="flex flex-col p-6 pb-12 h-screen pt-24">
       <h1 className="text-2xl font-bold mb-4">{product.title}</h1>
       <img src={`/${product.image}`} alt={product.title} className="w-full rounded h-64 object-cover mb-4" />
       <p className="mb-2">{product.desc}</p>
@@ -38,17 +38,18 @@ const ProductDetail = () => {
       <p className="font-medium">Tests included: {product.contains_tests}</p>
 
 
-      <div className='flex flex-row'>
-      <p className="text-black font-bold mt-4">Price: ₹{product.price}</p>
-      <button
-                onClick={() => {
-                  addItemToCart(product._id);
-                }}
-                className="flex text-sm justify-center items-center rounded-lg border font-semibold ml-auto text-red-500 shadow-md p-3"
-              >
-                ADD TO CART
-              </button>
+      <div className="flex flex-row fixed bottom-0 left-0 right-0 p-4 bg-white shadow-lg">
+        <p className="text-black font-bold mt-4">Price: ₹{product.price}</p>
+        <button
+          onClick={() => {
+            addItemToCart(product._id);
+          }}
+          className="flex text-sm justify-center items-center rounded-lg border font-semibold ml-auto text-red-500 shadow-md p-3"
+        >
+          ADD TO CART
+        </button>
       </div>
+
 
     </div>
   );

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { stringify } from 'query-string';
 
-const apiUrl = "http://localhost:5000/api/admin"; // Adjust the base URL as needed
+const apiUrl = "/api/admin"; // Adjust the base URL as needed
 
 export const dataProvider = {
     getList: (resource, params) => {

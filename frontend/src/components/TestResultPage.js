@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { UserContext } from './Context/UserContext';
-
+import axios from "axios";
 const TestResultPage = () => {
   const { orders } = useContext(UserContext);
 
@@ -10,9 +10,32 @@ const TestResultPage = () => {
   ) || [];
 
 
+  const handleDownloadResult = async (filePath) => {
+    try {
+      const response = await axios.get("/api/downloadresult", {
+        params: { filePath }, // Send filePath as query param
+        responseType: 'blob',
+        withCredentials: true, // Include cookies
+      });
+      // Handle response
+            // Create a URL for the downloaded file
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+
+            // Create a temporary <a> element to trigger the download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', 'testresult.pdf');  // The filename that will be used to download
+            document.body.appendChild(link);
+            link.click();  // Programmatically click the <a> element to trigger the download
+            document.body.removeChild(link);  // Clean up
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="container mx-auto p-6 pt-24">
       <h1 className="text-2xl font-bold mb-4">Test Results</h1>
       {completedProducts.length > 0 ? (
         <ul className="space-y-4">
@@ -29,11 +52,11 @@ const TestResultPage = () => {
                   {product.testResults.map(result => (
                     <div key={result._id} className="flex items-center justify-between p-2 border-b">
                       <p className="text-gray-600">Test Date: {new Date(result.date).toLocaleDateString()}</p>
-                      <a href={`http://localhost:5000/${result.pdfLink}`} download>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-500">
+
+                        <button onClick={()=>{ handleDownloadResult(result.pdfLink)}} className="px-4 py-2  text-red-500 rounded ">
                           Download Test Result
                         </button>
-                      </a>
+
                     </div>
                   ))}
                 </div>

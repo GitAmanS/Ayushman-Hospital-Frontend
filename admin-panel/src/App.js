@@ -10,7 +10,7 @@ import { dataProvider } from "./components/dataProvider";
 import { AdminList , AdminEdit, AdminCreate} from "./components/Admins";
 import authProvider from "./components/authProvider";
 import RoleProtectedResource from "./components/RoleProtectedResource";
-
+import { BrowserRouter } from 'react-router-dom';
 
 
 // API URL
@@ -44,7 +44,8 @@ const App = () => {
     fetchUserRole(); // Call the async function
   }, []); // Empty array ensures this runs once on mount
   return (
-    <Admin authProvider={authProvider} dataProvider={dataProvider}>
+    <BrowserRouter basename="/admin">
+          <Admin authProvider={authProvider} dataProvider={dataProvider}>
       <Resource name="categories" list={CategoryList} create={CreateCategory} edit={CategoryEdit} />
       <Resource name="products" list={ProductList} create={ProductCreate} edit={ProductEdit} />
       <Resource name="orders"   list={OrderList} edit={OrderEdit}/>
@@ -56,6 +57,8 @@ const App = () => {
       
       
     </Admin>
+    </BrowserRouter>
+
   );
 };
 

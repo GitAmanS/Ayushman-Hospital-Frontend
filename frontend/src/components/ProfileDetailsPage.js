@@ -69,7 +69,7 @@ const ProfileDetailsPage = () => {
 
     const verifyOtp = async () => {
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/verify-update-phone-otp', { newPhone, otp });
+            const response = await axios.post('/api/auth/verify-update-phone-otp', { newPhone, otp });
             setOtpMessage(response.data.message);
             if (response.data.success) {
                 setPhoneNumber(newPhone); // Update phone number in state if verification is successful

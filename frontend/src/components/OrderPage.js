@@ -23,7 +23,7 @@ const OrderPage = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 mt-24">
+    <div className="container mx-auto p-4 pt-24 pb-24">
       <h1 className="text-2xl font-bold mb-4">Your Orders</h1>
       <button onClick={clearOrders} className="mb-4 p-2 bg-red-500 text-white rounded">Clear Orders</button>
       <div className="space-y-4">

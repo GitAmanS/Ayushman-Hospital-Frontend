@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { UserContext } from './Context/UserContext';
 
 const CategoryProducts = () => {
@@ -9,6 +9,12 @@ const CategoryProducts = () => {
 
   // Find the category based on the categoryId
   const category = categories.find((cat) => cat._id === categoryId);
+
+  const navigate = useNavigate();
+
+  const handleProductClick = (productId) => {
+    navigate(`/product/${productId}`); // Updated to use navigate
+  };
 
   if (!category) {
     return <div>Category not found</div>;
@@ -20,11 +26,11 @@ const CategoryProducts = () => {
       {/* Display the products for the selected category */}
       <div className="">
         {category.products.map((product) => (
-          <div key={product._id} className="bg-white py-6 border-b rounded-lg">
+          <div key={product._id}  className="bg-white py-6 border-b rounded-lg">
             {/* Set the image to a wide rectangle (4:3 ratio) */}
-            <div className="w-full h-48 md:h-60">
+            <div className="w-full h-48 md:h-60" onClick={() => handleProductClick(product._id)}>
               <img
-                src={`http://localhost:5000/${product.image}`}
+                src={`/${product.image}`}
                 alt={product.title}
                 className="w-full h-full object-cover rounded-md"
               />

@@ -5,6 +5,7 @@ const {User} = require('../models/User'); // User model
 const Razorpay = require('razorpay');
 const { createRazorpayOrder } = require('../utils/razorpay');  
 const crypto = require('crypto');
+const path = require('path');
 
 const router = express.Router();
 
@@ -320,4 +321,21 @@ router.delete('/address/delete/:addressId', authenticateUser, async (req, res) =
     }
 });
 
+
+router.get('/downloadresult', authenticateUser, async (req, res) => {
+    const filePath = req.query.filePath;
+    const absolutePath = path.resolve(filePath); // Get the absolute path
+  
+    console.log("req body:", req.query.filePath);
+    console.log("Resolved path:", absolutePath);
+  
+    res.download(absolutePath, 'testresult.pdf', (err) => {
+      if (err) {
+        // Handle error
+        console.error(err);
+        res.status(500).send('Error occurred while downloading the file');
+      }
+    });
+  });
+  
 module.exports = router;
