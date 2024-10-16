@@ -32,38 +32,19 @@ app.use('/api', userRoutes)
 
 app.use('/uploads', express.static('uploads'));
 
-// Serve static files from the admin panel and frontend
-app.use('/admin', express.static(path.join(__dirname, './admin-panel/build')));
-app.use(express.static(path.join(__dirname, './frontend/build')));
 
-// Serve the admin panel on the /admin path
-app.get('/admin/*', (req, res) => {
-  res.sendFile(path.join(__dirname, './admin-panel/build', 'index.html'));
-});
+// Serve the static files from both the frontend and admin panel
+app.use(express.static(path.join(__dirname, 'frontend', 'build')));
+app.use(express.static(path.join(__dirname, 'admin-panel', 'build')));
 
-// Serve the frontend on the root path
+// Catch-all handler to serve the frontend's index.html
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, './frontend/build', 'index.html'));
+  res.sendFile(path.join(__dirname, 'admin-panel', 'build', 'index.html'));
 });
 
-
-// app.use(express.static(path.resolve(__dirname, 'admin-panel', 'build')));
-// app.get("/admin/*", (req, res) => {
-//   res.sendFile(path.resolve(__dirname, 'admin-panel', 'build', 'index.html'), function (err) {
-//     if (err) {
-//       res.status(500).send(err);
-//     }
-//   });
-// });
-
-// // Serve the frontend on all other paths
-// app.use(express.static(path.resolve(__dirname, 'frontend', 'build')));
-// app.get("*", (req, res) => {
-//   res.sendFile(path.resolve(__dirname, 'frontend', 'build', 'index.html'), function (err) {
-//     if (err) {
-//       res.status(500).send(err);
-//     }
-//   });
+// If you want a fallback for admin panel (optional, if admin-panel has a separate structure)
+// app.get('/admin/*', (req, res) => {
+//   res.sendFile(path.join(__dirname, 'admin-panel', 'build', 'index.html'));
 // });
 
 // Start the server
