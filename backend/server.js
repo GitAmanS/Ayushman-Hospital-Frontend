@@ -32,9 +32,9 @@ app.use('/api', userRoutes)
 
 app.use('/uploads', express.static('uploads'));
 
-// Serve static files from the React app
+// Serve static files from the admin panel and frontend
+app.use('/admin', express.static(path.join(__dirname, './admin-panel/build')));
 app.use(express.static(path.join(__dirname, './frontend/build')));
-app.use(express.static(path.join(__dirname, './admin-panel/build')));
 
 // Serve the admin panel on the /admin path
 app.get('/admin/*', (req, res) => {
@@ -45,6 +45,7 @@ app.get('/admin/*', (req, res) => {
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, './frontend/build', 'index.html'));
 });
+
 
 // app.use(express.static(path.resolve(__dirname, 'admin-panel', 'build')));
 // app.get("/admin/*", (req, res) => {
