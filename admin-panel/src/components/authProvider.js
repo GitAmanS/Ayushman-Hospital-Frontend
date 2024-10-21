@@ -39,7 +39,8 @@ GetUserRole: async()=>{
     // Make a request to the backend to verify the token
     const response = await axios.get(`${apiUrl}/checkRole`, { withCredentials: true });
     if (response.status === 200) {
-            return response.role; // User is authenticated
+      console.log("resposne:", response)
+            return response.data.role; // User is authenticated
         }
     } catch (error) {
         console.error("Authentication check failed", error);

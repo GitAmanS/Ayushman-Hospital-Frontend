@@ -21,20 +21,22 @@ const apiUrl = "http://localhost:5000/api/admin"; // Update with your backend UR
 // Main App Component
 const App = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isSuperUser, setIsSuperUser] = useState(null)
+  const [isSuperUser, setIsSuperUser] = useState(false)
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
         const response = await authProvider.GetUserRole(); // Make sure to include credentials if needed
         console.log("fetchuserRole:", response)
         // Assuming the response has a 'role' field
-        if (response.data.role === 'superadmin') {
+        if (response === 'superadmin') {
           console.log("super admin set")
           setIsSuperUser(true);
         } else {
           console.log("admin set")
           setIsSuperUser(false);
         }
+
+        console.log("isSuperAdmin:", isSuperUser)
       } catch (error) {
         console.error('Error fetching user role:', error);
         setIsSuperUser(false); // Handle error appropriately
@@ -51,7 +53,7 @@ const App = () => {
       <Resource name="orders"   list={OrderList} edit={OrderEdit}/>
       <Resource name="users" list={UserList} />
       {
-        <Resource name="admins" list={AdminList} edit={EditGuesser} create={AdminCreate}/>
+        isSuperUser&&<Resource name="admins" list={AdminList} edit={EditGuesser} create={AdminCreate}/>
       }
       
       

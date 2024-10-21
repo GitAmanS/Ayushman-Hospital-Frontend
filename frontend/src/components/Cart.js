@@ -5,9 +5,19 @@ import { IoMdArrowRoundBack } from "react-icons/io";
 import { EmojioneShoppingCart } from './icons/EmojioneShoppingCart';
 import BackButton from './buttons/BackButton'
 import AddressSlidingSection from './slidingSections/AddressSlidingSection';
+import LoginSlidingSection from './slidingSections/LoginSlidingSection';
 const Cart = () => {
-  const { cartProducts,user,clearCart,addresses, fetchCart,setAddresses, cartTotal,selectedAddress, setSelectedAddress, addItemToCart,decreaseItemQuantity } = useContext(UserContext); // Access cart data from UserContext
+  const { cartProducts,user,clearCart,addresses,localCart, fetchCart,setAddresses, cartTotal,selectedAddress, setSelectedAddress, addItemToCart,decreaseItemQuantity } = useContext(UserContext); // Access cart data from UserContext
   
+  let currentCart = cartProducts;
+
+  
+
+  if(!user){
+    currentCart = localCart;
+  }
+
+  console.log("currentCart:", currentCart)
   const navigate = useNavigate();
 
   const handleGoHome = () => {
@@ -15,9 +25,15 @@ const Cart = () => {
   };
 
   const [isSlidingOpen, setIsSlidingOpen] = useState(false);
+  const [isLoginSlidingOpen, setLoginIsSlidingOpen] = useState(false);
   // Toggle the sliding section
   const toggleSlide = () => {
-    setIsSlidingOpen(!isSlidingOpen);
+    if(user){
+        setIsSlidingOpen(!isSlidingOpen);
+    }else{
+        setLoginIsSlidingOpen(!isLoginSlidingOpen)
+    }
+    
   };
 
   const initiateRazorpayPayment = async () => {
@@ -82,23 +98,23 @@ const Cart = () => {
         <div className='p-4 flex flex-col justify-end  md:px-36'>
 
             {/* Check if cart has items */}
-            {cartProducts && cartProducts.length > 0? (
+            {currentCart && currentCart.length > 0? (
                 
                 <div>
                                 <div>
                 <h1 className='font-bold pb-2'>Tests added</h1>
             </div>
             <button onClick={()=>{clearCart()}}>Clear Cart</button>
-                {cartProducts.map((item) => (
+                {currentCart.map((item) => (
                 
                     <div key={item.productId} className='flex flex-row py-2'>
                         
                     <img src={item.image} className='h-10 w-10 object-cover rounded-lg'/>
                     <div className='flex px-2 flex-col gap-1 justify-start'>
                     <h3 className='font-bold text-sm'>{item.title}</h3>
-                    <p className='text-xs text-gray-500'>
+                    {/* <p className='text-xs text-gray-500'>
                         {item.desc}
-                    </p>
+                    </p> */}
                     <p className='text-base'> ₹{item.price*item.quantity}</p>
                     {/* <p>Quantity: {item.quantity}</p> */}
                     </div>
@@ -141,7 +157,7 @@ const Cart = () => {
             </div>
 
             <AddressSlidingSection isOpen={isSlidingOpen} initiateRazorpayPayment={initiateRazorpayPayment} toggleSlide={toggleSlide} />
-      
+            <LoginSlidingSection isOpen={isLoginSlidingOpen} toggleSlide={toggleSlide} />
     </div>
   );
 };

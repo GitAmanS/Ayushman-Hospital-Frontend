@@ -41,11 +41,16 @@ export const UserProvider = ({ children }) => {
   const [isOtpVerified, setIsOtpVerified] = useState(false); // To track OTP verification
   const [isNewUser, setIsNewUser] = useState(false); // To track if user is new
   const [categories, setCategories] = useState([]);
-  const [cartTotal, setCartTotal] =useState(null);
+  const [cartTotal, setCartTotal] =useState(0);
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState();
   const [addresses, setAddresses] = useState([]);
+  const [localCart, setLocalCart] = useState(() => {
+    // Retrieve initial localCart from localStorage
+    const storedCart = localStorage.getItem('localCart');
+    return storedCart ? JSON.parse(storedCart) : [];
+  });
 
 
   const fetchCart = async()=>{
@@ -62,7 +67,11 @@ export const UserProvider = ({ children }) => {
       console.error('Error recieving cart:', error);
     }
   }
-
+  // Store localCart and cartTotal in localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('localCart', JSON.stringify(localCart));
+    localStorage.setItem('cartTotal', JSON.stringify(cartTotal));
+  }, [localCart, cartTotal]);
 
 
   useEffect(() => {
@@ -87,12 +96,24 @@ export const UserProvider = ({ children }) => {
 
   // Effect to retrieve user from local storage on mount
   useEffect(() => {
+
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       fetchCart()
+    }else{
+      if (localCart && localCart.length > 0) {
+        let total = localCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+        setCartTotal(total);  // Assuming you're setting the total in `cartTotal`
+        console.log("Cart total:", total);
+      } else {
+        setCartTotal(0);  // If no items are in the cart, set total to 0
+      }
     }
-  }, []);
+
+    
+
+}, []);
 
   // Effect to store user in local storage whenever it changes
   useEffect(() => {
@@ -152,94 +173,97 @@ export const UserProvider = ({ children }) => {
     fetchCategories();
   }, []);
 
-// Add item to cart function
-const addItemToCart = async (productId) => {
-  // Check if the product is already in the user's cart
-  // const isProductInCart = user.cart.some((item) => item.productId === productId);
-  
-  // let updatedCart;
-  
-  // if (isProductInCart) {
-  //   // If the product is already in the cart, increase the quantity
-  //   updatedCart = user.cart.map((item) =>
-  //     item.productId === productId
-  //       ? { ...item, quantity: item.quantity + 1 }
-  //       : item
-  //   );
-  // } else {
-  //   // If the product is not in the cart, add it with a quantity of 1
-  //   updatedCart = [...user.cart, { productId, quantity: 1 }];
-  // }
+  const addItemToCart = async (productId) => {
+    if (user) {
+      try {
+        const response = await axios.post(
+          '/api/cart/add',
+          { productId, quantity: 1 },
+          { withCredentials: true }
+        );
+        setCartProducts(response.data.cart);
+        setCartTotal(response.data.cartTotal);
+      } catch (error) {
+        console.error('Error adding item to cart:', error);
+      }
+    } else {
+      try {
+        const product = await axios.get(`/api/products/${productId}`);
+        setLocalCart((prevCart) => {
+          const existingProductIndex = prevCart.findIndex(item => item.productId === productId);
+          let updatedCart;
+          if (existingProductIndex !== -1) {
+            updatedCart = prevCart.map((item, index) =>
+              index === existingProductIndex
+                ? { ...item, quantity: item.quantity + 1 }
+                : item
+            );
+          } else {
+            updatedCart = [...prevCart, { ...product.data, productId: product.data._id, quantity: 1 }];
+          }
+          const updatedTotal = updatedCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+          setCartTotal(updatedTotal);
+          return updatedCart;
+        });
+      } catch (err) {
+        console.error('Error adding item to local cart:', err);
+      }
+    }
+  };
 
-  // // Update the user's cart state
-  // setUser({ ...user, cart: updatedCart });
+  const decreaseItemQuantity = async (productId) => {
+    if (user) {
+      try {
+        const response = await axios.post(
+          '/api/cart/remove',
+          { productId, quantity: 1 },
+          { withCredentials: true }
+        );
+        setCartProducts(response.data.cart);
+        setCartTotal(response.data.cartTotal);
+      } catch (error) {
+        console.error('Error decreasing item quantity in cart:', error);
+      }
+    } else {
+      setLocalCart((prevCart) => {
+        const existingProductIndex = prevCart.findIndex(item => item.productId === productId);
+        if (existingProductIndex !== -1) {
+          const existingProduct = prevCart[existingProductIndex];
+          let updatedCart;
+          if (existingProduct.quantity > 1) {
+            updatedCart = prevCart.map((item, index) =>
+              index === existingProductIndex
+                ? { ...item, quantity: item.quantity - 1 }
+                : item
+            );
+          } else {
+            updatedCart = prevCart.filter((item) => item.productId !== productId);
+          }
+          const updatedTotal = updatedCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+          setCartTotal(updatedTotal);
+          return updatedCart;
+        }
+        return prevCart;
+      });
+    }
+  };
 
-  // Update the cart products to reflect the changes
-  
-
-  // Send request to the backend to update the cart in the database
-  try {
-    
-    const response = await axios.post('/api/cart/add', 
-      { productId, quantity: 1 }, // Data to send
-      { withCredentials: true } // Sending cookies
-    );
-
-    setCartProducts(response.data.cart)
-    setCartTotal(response.data.cartTotal)
-
-  } catch (error) {
-    console.error('Error adding item to cart:', error);
-  }
-};
-
-// Decrease item quantity or remove it from cart if quantity becomes 0
-const decreaseItemQuantity = async (productId) => {
-  // Check if the product exists in the cart
-  const updatedCart = user.cart
-  //   .map((item) => 
-  //     item.productId === productId 
-  //       ? { ...item, quantity: item.quantity - 1 } 
-  //       : item
-  //   )
-  //   .filter((item) => item.quantity > 0); // Filter out items with 0 quantity
-
-  // // Update the user's cart state
-  // setUser({ ...user, cart: updatedCart });
-
-  // Update the cart products to reflect the changes
-  
-  // Send request to the backend to update the cart in the database
-  try {
-    console.log("product id", productId)
-    const response = await axios.post('/api/cart/remove', 
-      { productId, quantity: 1 }, // Data to send
-      { withCredentials: true } // Sending cookies
-    );
-    setCartProducts(response.data.cart)
-    setCartTotal(response.data.cartTotal)
-
-
-  } catch (error) {
-    console.error('Error removing item from cart:', error);
-  }
-};
+  const clearCart = async () => {
+    if (user) {
+      try {
+        const response = await axios.post('/api/cart/clear', {}, { withCredentials: true });
+        setCartProducts(response.data.cart);
+        setCartTotal(response.data.cartTotal);
+      } catch (error) {
+        console.error('Error clearing cart:', error);
+      }
+    } else {
+      setLocalCart([]);
+      setCartTotal(0);
+    }
+  };
 
 
-const clearCart = async()=>{
-  try {
-    const response = await axios.post('/api/cart/clear', 
-      {}, 
-      { withCredentials: true } // Sending cookies
-    );
-    setCartProducts(response.data.cart)
-    setCartTotal(response.data.cartTotal)
-
-
-  } catch (error) {
-    console.error('Error removing item from cart:', error);
-  }
-}
 
   // OTP login and signup methods
   const requestOtp = async (phoneNumber) => {
@@ -254,61 +278,68 @@ const clearCart = async()=>{
 
   const submitEmailF = async (email) => {
     try {
-      const response = await fetch('/api/auth/submit-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      const response = await axios.post('http://localhost:5000/api/auth/submit-email', {email:email}, { withCredentials: true });
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
-        console.log("user",data.user)
-      } else {
-        const errorData = await response.json();
-        console.error('Error:', errorData);
-        throw new Error('Login failed');
-      }
+      
+        
+        setUser(response.data.user);
+        console.log("user",response.data.user)
+      
     } catch (error) {
       console.error('An error occurred:', error);
     }
   };
 
   // OTP verification function
-  const verifyOtp = async (phoneNumber, otp) => {
-    const phone = `91${phoneNumber.toString()}`;
+const verifyOtp = async (phoneNumber, otp) => {
+  const phone = `91${phoneNumber.toString()}`;
 
-    try {
-      const response = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, otp }),
-      });
+  try {
+    const response = await fetch('/api/auth/verify-otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone, otp }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(data.user);
+    if (response.ok) {
+      const data = await response.json();
+      setUser(data.user);
 
-        console.log("user", data.user)
-        setCartProducts(data.user.cart)
-        setIsNewUser(data.isNewUser);
-        setIsOtpVerified(true);
-      } else {
-        const errorData = await response.json();
-        console.error('Error:', errorData);
-        throw new Error('Login failed');
+      console.log("user", data.user);
+      setCartProducts(data.user.cart); // Set the user's cart after login
+      setIsNewUser(data.isNewUser);
+      setIsOtpVerified(true);
+
+      // Now handle merging local cart with user cart
+      if (localCart && localCart.length > 0) {
+        console.log('Merging local cart with user cart...');
+        for (let item of localCart) {
+          // Call your add to cart API for each item in the local cart
+          await axios.post('/api/cart/add', { productId: item.productId, quantity: item.quantity }, { withCredentials: true });
+        }
+        // Clear local cart after transferring to the server-side cart
+        setLocalCart([]);
+        localStorage.removeItem('localCart'); // Optional: Also remove from localStorage
+        fetchCart();
       }
-    } catch (error) {
-      console.error('An error occurred:', error);
+    } else {
+      const errorData = await response.json();
+      console.error('Error:', errorData);
+      throw new Error('Login failed');
     }
-  };
+  } catch (error) {
+    console.error('An error occurred:', error);
+  }
+};
+
 
   // Simulate logout
   const logout = () => {
-    // Clear state and localStorage
     setUser(null);
     setCartProducts([]);
     localStorage.removeItem('user');
+    localStorage.removeItem('localCart');
+    localStorage.removeItem('cartTotal');
     document.cookie = "user=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     navigate("/profile");
   };
@@ -316,7 +347,7 @@ const clearCart = async()=>{
 
   return (
     <UserContext.Provider
-      value={{addresses,fetchCart, setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
+      value={{addresses,fetchCart,localCart,  setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
     >
       {children}
     </UserContext.Provider>

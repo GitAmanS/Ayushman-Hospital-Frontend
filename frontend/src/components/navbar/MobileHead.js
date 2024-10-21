@@ -10,7 +10,12 @@ const MobileHeader = () => {
   const [lastScrollY, setLastScrollY] = useState(0);
   const navigate = useNavigate();
   const location = useLocation()
-  const { cartProducts } = useContext(UserContext);
+  const { cartProducts, user, localCart } = useContext(UserContext);
+
+  let cart = cartProducts;
+  if(!user){
+    cart = localCart;
+  }
   const goToCartPage = () => {
     navigate('/cart');
   };
@@ -58,9 +63,9 @@ const MobileHeader = () => {
         </button>
 
         {/* Badge */}
-        {cartProducts.length > 0 && (
+        {cart.length > 0 && (
           <span className="absolute top-2 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white bg-red-600 rounded-full transform translate-x-1/2 -translate-y-1/2">
-            {cartProducts.length}
+            {cart.length}
           </span>
         )}
       </div>

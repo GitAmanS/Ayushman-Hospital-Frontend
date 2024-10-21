@@ -31,6 +31,7 @@ const authenticateUser = async (req, res, next) => {
         const user = await User.findOne({ phone });
 
         if (!user) {
+            console.log("unauthorized")
             return res.status(401).send('Unauthorized');
         }
 

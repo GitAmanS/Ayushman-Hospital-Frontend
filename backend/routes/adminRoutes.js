@@ -198,9 +198,9 @@ router.delete('/categories', adminAuth, async (req, res) => {
 // Route to create a new product
 router.post('/products', adminAuth, upload.single('image'), async (req, res) => {
     const { title, desc, categories, reports_within, contains_tests, price } = req.body;
-
+    
     const updateData = { title, desc, category:categories, reports_within, contains_tests,price };
-
+    console.log("updateDate:", updateData)
 
     if (req.file) {
         console.log('Uploaded File:', req.file);
@@ -268,39 +268,43 @@ router.get('/products/:id', adminAuth, async (req, res) => {
 // Route to update a product by ID
 router.put('/products/:id', adminAuth, upload.single('image'), async (req, res) => {
     const { id } = req.params;
-    const { title, desc, categories, reports_within, contains_tests, price } = req.body;
-
-    const existingProduct = await Product.findById(id);
-    if (!existingProduct) {
-        return res.status(404).json({ message: 'Product not found' });
-    }
-
-    const updateData = { title, desc, category:categories, reports_within, contains_tests,price };
-    // const image = req.file ? req.file.path.replace(/\\/g, '/') : null; // Get the uploaded image path
-
-
-            // Check if a new image has been uploaded
-            if (req.file) {
-                console.log('Uploaded File:', req.file);
-                const image = req.file.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
-                updateData.image = image; // Update with the new image path
-                console.log("Image is included");
-            } else {
-                // If no new image is provided, keep the existing image path
-                console.log('No image included');
-                updateData.image = existingProduct.image; // Retain the old image
-            }
-    // const updateData = { title, desc, category:categories, reports_within, contains_tests, price };
-    // if (image) {
-    //     updateData.image = image;
-    // }
+    const { title, desc, category, reports_within, contains_tests, price } = req.body;
 
     try {
+        // Find the existing product
+        const existingProduct = await Product.findById(id);
+        if (!existingProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Build the updateData object by checking each field
+        const updateData = {
+            title: title || existingProduct.title, // If title is missing, keep the existing one
+            desc: desc || existingProduct.desc,
+            category: category || existingProduct.category,
+            reports_within: reports_within || existingProduct.reports_within,
+            contains_tests: contains_tests || existingProduct.contains_tests,
+            price: price || existingProduct.price,
+        };
+
+        console.log("updated product:", updateData)
+
+        // Check if a new image has been uploaded
+        if (req.file) {
+            const image = req.file.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
+            updateData.image = image; // Update with the new image path
+        } else {
+            // Retain the old image if no new image is provided
+            updateData.image = existingProduct.image;
+        }
+
+        // Update the product in the database
         const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        
+
+        // Find the category name (if exists) to include it in the response
         const categoryData = await Category.findById(product.category);
         const productWithCategoryName = {
             ...product.toObject(),
@@ -308,8 +312,9 @@ router.put('/products/:id', adminAuth, upload.single('image'), async (req, res) 
             categoryName: categoryData ? categoryData.name : 'Unknown',
         };
 
-        res.status(200).json( productWithCategoryName );
+        res.status(200).json(productWithCategoryName);
     } catch (err) {
+        console.error("Error updating product:", err);
         res.status(500).json({ message: 'Error updating product', error: err });
     }
 });
@@ -649,6 +654,11 @@ router.post('/admins', async (req, res) => {
 
 // Route to get all admins
 router.get('/admins', adminAuth, async (req, res) => {
+    if (!req.admin || req.admin.role !== 'superadmin') {
+        console.log("admin is not superadmin");
+        return res.status(403).json({ message: 'Access denied: Superadmin role required' });
+    }
+
     try {
         const admins = await Admin.find();
         
@@ -657,7 +667,6 @@ router.get('/admins', adminAuth, async (req, res) => {
             ...admin.toObject(), // Convert Mongoose document to plain object
             id: admin._id.toString() // Add 'id' field mapped from '_id'
         }));
-
 
         res.status(200).json({
             data: adminsWithId, // Admins data with 'id' field included
@@ -671,6 +680,14 @@ router.get('/admins', adminAuth, async (req, res) => {
 
 // Route to delete a single admin by ID
 router.delete('/admins/:id', adminAuth, async (req, res) => {
+
+    if (req.admin && req.admin.role !== 'superadmin') {
+
+        console.log("admin is not superadmin")
+        res.status(403).json({ message: 'Access denied: Superadmin role required' });
+    }else{
+        console.log("admin is superadmin")
+    }
     const { id } = req.params;
     try {
         const admin = await Admin.findByIdAndDelete(id);
@@ -685,8 +702,14 @@ router.delete('/admins/:id', adminAuth, async (req, res) => {
 
 // Route to delete multiple admins
 router.delete('/admins', adminAuth, async (req, res) => {
+    if (req.admin && req.admin.role !== 'superadmin') {
+
+        console.log("admin is not superadmin")
+        res.status(403).json({ message: 'Access denied: Superadmin role required' });
+    }
     const { ids } = req.body; // Array of admin IDs to delete
     try {
+        
         const result = await Admin.deleteMany({ _id: { $in: ids } });
 
         if (result.deletedCount === 0) {
@@ -701,6 +724,11 @@ router.delete('/admins', adminAuth, async (req, res) => {
 
 // Route to get one admin by ID (getOne)
 router.get('/admins/:id', adminAuth, async (req, res) => {
+    if (req.admin && req.admin.role !== 'superadmin') {
+
+        console.log("admin is not superadmin")
+        res.status(403).json({ message: 'Access denied: Superadmin role required' });
+    }
     const { id } = req.params;
     try {
         const admin = await Admin.findById(id);
@@ -726,10 +754,10 @@ router.get('/checkRole', adminAuth, async (req, res) => {
 
     try {
         // Check if the admin's role is "superadmin"
-        console.log(req.admin)
-        if (req.admin.role !== "superadmin") {
+        console.log("req admin:",req.admin)
+        if (req.admin.role != "superadmin") {
             // Return a 403 Forbidden status if not superadmin
-            return res.status(200).json({ message: 'Access denied: You do not have the required permissions.', role:req.admin.role });
+            return res.status(200).json({ message: 'Access denied: You do not have the required permissions.', role:req.admin.role, "admin":req.admin, });
         }
 
         // If the role is superadmin, respond with a success message

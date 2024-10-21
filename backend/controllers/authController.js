@@ -73,6 +73,12 @@ exports.verifyOtp = async (req, res) => {
                 email: ''
             });
             await user.save();
+                    // Set an encrypted cookie
+            res.cookie('user', encrypt(phone), {
+                maxAge: 24 * 60 * 60 * 1000, // 1 day
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+            });
             return res.status(201).send({
                 message: 'User signed up successfully.',
                 isNewUser: true,
@@ -217,14 +223,16 @@ exports.submitEmail = async (req, res) => {
         const existingUser = await User.findOne({ email: email });
 
         // If the existing user is found and it's not the current user, return an error
-        if (existingUser && existingUser._id.toString() !== user._id.toString()) {
-            return res.status(400).send('Email already exists.');
-        }
+        // if (existingUser && existingUser._id.toString() !== user._id.toString()) {
+        //     return res.status(400).send('Email already exists.');
+        // }
 
         // Update the user's email
         user.email = email;
 
         await user.save();
+
+        console.log("saved user:", user)
 
         return res.status(200).send({
             message: 'Email submitted successfully.',
@@ -237,7 +245,9 @@ exports.submitEmail = async (req, res) => {
             isNewUser: !existingUser, // If existingUser is null, this is a new user
         });
     } catch (error) {
+        console.log("error email:", error)
         return res.status(500).send('Error updating user email.');
+
     }
 };
 

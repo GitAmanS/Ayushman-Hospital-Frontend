@@ -322,6 +322,16 @@ router.delete('/address/delete/:addressId', authenticateUser, async (req, res) =
 });
 
 
+router.get('/getOneProduct/:productId', async(req, res)=>{
+    const {productId}= req.params;
+    try{
+        const product = Product.findById(productId);
+        res.status(200).json(product)
+    }catch(err){
+        res.status(500).json({message: "error occured while fetching single product", error: err})
+    }
+})
+
 router.get('/downloadresult', authenticateUser, async (req, res) => {
     const filePath = req.query.filePath;
     const absolutePath = path.resolve(filePath); // Get the absolute path
