@@ -10,7 +10,7 @@ import { dataProvider } from "./components/dataProvider";
 import { AdminList , AdminEdit, AdminCreate} from "./components/Admins";
 import authProvider from "./components/authProvider";
 import RoleProtectedResource from "./components/RoleProtectedResource";
-import { BrowserRouter } from 'react-router-dom';
+import { BrowserRouter, useLocation } from 'react-router-dom';
 
 
 // API URL
@@ -21,7 +21,9 @@ const apiUrl = "http://localhost:5000/api/admin"; // Update with your backend UR
 // Main App Component
 const App = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const [isSuperUser, setIsSuperUser] = useState(false)
+  const [isSuperUser, setIsSuperUser] = useState(false);
+  const location = useLocation(); 
+  // const { isPending, authenticated } = useAuthState();
   useEffect(() => {
     const fetchUserRole = async () => {
       try {
@@ -43,10 +45,16 @@ const App = () => {
       }
     };
 
-    fetchUserRole(); // Call the async function
-  }, []); // Empty array ensures this runs once on mount
+    // if (authenticated) {
+    //   fetchUserRole();
+    // }
+
+    fetchUserRole()
+
+     // Call the async function
+  }, [location]); // Empty array ensures this runs once on mount
   return (
-    <BrowserRouter basename="/admin">
+    
           <Admin authProvider={authProvider} dataProvider={dataProvider}>
       <Resource name="categories" list={CategoryList} create={CreateCategory} edit={CategoryEdit} />
       <Resource name="products" list={ProductList} create={ProductCreate} edit={ProductEdit} />
@@ -59,7 +67,7 @@ const App = () => {
       
       
     </Admin>
-    </BrowserRouter>
+    
 
   );
 };

@@ -427,7 +427,7 @@ const uploadPDF = multer({
 });
 
 // Route to upload a test result (PDF) for a specific product in an order
-router.post('/orders/:orderId/product/:productOrderId/test-result', uploadPDF.single('testResult'), async (req, res) => {
+router.post('/orders/:orderId/product/:productOrderId/test-result',adminAuth, uploadPDF.single('testResult'), async (req, res) => {
     console.log(req.body)
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
@@ -457,7 +457,7 @@ router.post('/orders/:orderId/product/:productOrderId/test-result', uploadPDF.si
 });
 
 // Get all orders
-router.get('/orders', async (req, res) => {
+router.get('/orders',adminAuth, async (req, res) => {
     try {
         const users = await User.find().populate('orders.products.productId'); // Populate product details
         const allOrders = users.flatMap(user => 
@@ -478,7 +478,7 @@ router.get('/orders', async (req, res) => {
 });
 
 // Route to get user details and their orders
-router.get('/orderuser', async (req, res) => {
+router.get('/orderuser',adminAuth, async (req, res) => {
     const { userId } = req.body; // Assume userId is sent in the request body
     try {
         const user = await User.findById(userId).populate('orders.products.productId'); // Populate orders with product details
@@ -489,7 +489,7 @@ router.get('/orderuser', async (req, res) => {
 });
 
 // Route to get a single order and its products
-router.get('/orders/:orderId', async (req, res) => {
+router.get('/orders/:orderId',adminAuth, async (req, res) => {
     const { orderId } = req.params;
     console.log("order id:", orderId)
 
@@ -532,6 +532,65 @@ router.get('/orders/:orderId', async (req, res) => {
         return res.status(500).json({ message: 'Internal server error.' });
     }
 });
+
+
+// Route to delete multiple orders
+router.delete('/orders',adminAuth, async (req, res) => {
+    const { ids } = req.body; // Assume orderIds is sent in the request body as an array
+    console.log("order body:", req.body)
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ message: 'Order IDs must be provided as an array.' });
+    }
+
+    try {
+        // Ensure all orderIds are valid ObjectId
+        // const validOrderIds = ids.map(id => mongoose.Types.ObjectId(id));
+
+        // Delete the orders from the database
+        const result = await User.updateMany(
+            {},
+            { $pull: { orders: { _id: { $in: ids } } } } // Pull orders from the user collection
+        );
+
+        // Check if any orders were deleted
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'No orders found for the provided IDs.' });
+        }
+
+        res.status(200).json({ message: `${result.modifiedCount} orders deleted successfully.` });
+    } catch (error) {
+        console.error('Error deleting orders:', error); // Log the error for debugging
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+
+
+
+// Route to delete a single order by orderId
+router.delete('/orders/:orderId', async (req, res) => {
+    const { orderId } = req.params; // Get the orderId from the route parameters
+
+    try {
+        // Find the user who has the order and delete the specific order
+        const result = await User.updateOne(
+            { 'orders._id': orderId }, // Match user with the specified order ID
+            { $pull: { orders: { _id: orderId } } } // Remove the order from the user's orders array
+        );
+
+        // Check if the order was found and deleted
+        if (result.modifiedCount === 0) {
+            return res.status(404).json({ message: 'Order not found.' });
+        }
+
+        res.status(200).json({ message: 'Order deleted successfully.' });
+    } catch (error) {
+        console.error('Error deleting order:', error); // Log the error for debugging
+        return res.status(500).json({ message: 'Internal server error.' });
+    }
+});
+
+
 
 
 router.get('/check-auth',adminAuth,  async(req,res)=>{
