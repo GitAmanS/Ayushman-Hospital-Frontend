@@ -3,7 +3,12 @@ import axios from "axios";
 import { UserContext } from './Context/UserContext';
 
 const OrderPage = () => {
-  const { orders, setOrders, clearOrders } = useContext(UserContext);
+  const { orders, setOrders, clearOrders,fetchOrders } = useContext(UserContext);
+
+
+  useEffect(()=>{
+    fetchOrders()
+  },[])
 
 
 
@@ -13,7 +18,7 @@ const OrderPage = () => {
         return 0; // 0% progress
       case 'scheduled':
         return 1; // Step 1 completed
-      case 'processed':
+      case 'processing':
         return 2; // Step 2 completed
       case 'completed':
         return 3; // Step 3 completed

@@ -74,20 +74,24 @@ export const UserProvider = ({ children }) => {
   }, [localCart, cartTotal]);
 
 
+
+      // Fetch orders from the backend
+      const fetchOrders = async () => {
+        try {
+          const response = await axios.get('/api/orders', {
+            withCredentials: true, // Send cookies along with the request
+          });
+          const data = response.data.orders;
+          console.log("orders:", data);
+          setOrders(data);
+        } catch (error) {
+          console.error('Error fetching orders:', error);
+        }
+      };
+
+
   useEffect(() => {
-    // Fetch orders from the backend
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get('/api/orders', {
-          withCredentials: true, // Send cookies along with the request
-        });
-        const data = response.data.orders;
-        console.log("orders:", data);
-        setOrders(data);
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      }
-    };
+
 
     fetchOrders();
   }, [setOrders]);
@@ -347,7 +351,7 @@ const verifyOtp = async (phoneNumber, otp) => {
 
   return (
     <UserContext.Provider
-      value={{addresses,fetchCart,localCart,  setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
+      value={{addresses,fetchCart,localCart,fetchOrders,  setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
     >
       {children}
     </UserContext.Provider>

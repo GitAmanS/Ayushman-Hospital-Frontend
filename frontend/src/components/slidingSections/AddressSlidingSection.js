@@ -73,7 +73,7 @@ const AddressSlidingSection = ({ isOpen, toggleSlide, initiateRazorpayPayment })
         <div className="w-full flex justify-center ">
           <button 
             onClick={() => setShowConfirmation(true)} // Show confirmation modal
-            className={`bg-red-500 mx-auto text-white px-24 my-8 py-2 rounded`}
+            className={`bg-red-500 mx-auto text-white px-24 md:mb-auto py-2 rounded`}
           >
             Continue Payment
           </button>

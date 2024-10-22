@@ -19,7 +19,12 @@ import OrderPage from './components/OrderPage.js';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import TestResultPage from './components/TestResultPage.js';
+import React, { useEffect } from 'react';
+
 function App() {
+
+
+
   return (
     <div className='open-sans'>
       <ToastContainer />
