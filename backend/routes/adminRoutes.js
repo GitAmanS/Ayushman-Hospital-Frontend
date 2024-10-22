@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const { Product, Category } = require('../models/Product'); // Update with your actual model paths
 const Admin = require('../models/Admin');
 const {User, Order} = require('../models/User'); // Import User model
@@ -10,10 +11,16 @@ const mongoose = require('mongoose');
 
 const router = express.Router();
 
-// Set up multer for file uploads
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/'); // Directory to save the uploaded files
+        const uploadDir = path.resolve('uploads/'); // Ensure the 'uploads/' directory is at the project root
+        
+        // Check if 'uploads/' directory exists, if not, create it
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true }); // Create the 'uploads' directory if it doesn't exist
+        }
+
+        cb(null, uploadDir); // Use the 'uploads/' directory at the project root
     },
     filename: (req, file, cb) => {
         cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name collisions
@@ -404,7 +411,14 @@ router.put('/orders/:orderId/product/:productOrderId/process', async (req, res) 
 // Update multer to accept PDF uploads
 const pdfStorage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, 'uploads/test-results/'); // Directory to save the test result PDFs
+        const uploadDir = path.resolve('uploads/test-results/'); // Ensure 'uploads/test-results/' is at the project root
+
+        // Check if 'uploads/test-results/' directory exists, if not, create it
+        if (!fs.existsSync(uploadDir)) {
+            fs.mkdirSync(uploadDir, { recursive: true }); // Create the 'uploads/test-results' directory if it doesn't exist
+        }
+
+        cb(null, uploadDir); // Use the 'uploads/test-results/' directory at the project root
     },
     filename: (req, file, cb) => {
         cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name collisions
