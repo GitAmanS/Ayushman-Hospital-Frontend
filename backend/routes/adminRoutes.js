@@ -14,7 +14,7 @@ const router = express.Router();
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         const uploadDir = path.resolve('uploads/'); // Ensure the 'uploads/' directory is at the project root
-        
+
         // Check if 'uploads/' directory exists, if not, create it
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true }); // Create the 'uploads' directory if it doesn't exist
@@ -67,11 +67,13 @@ router.post('/login', async (req, res) => {
 // Route to create a new category
 router.post('/categories', adminAuth, upload.single('image'), async (req, res) => {
     const { name, description } = req.body; // Include description
-    const image = req.file ? req.file.path.replace(/\\/g, '/') : null; // Replace backslashes with forward slashes
+    const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
 
     if (!image) {
         return res.status(400).json({ message: 'Image file is required' });
     }
+
+    console.log("image:",image)
 
     const category = new Category({ name, description, image }); // Include description in the category
     try {
@@ -127,8 +129,10 @@ router.put('/categories/:id', adminAuth, upload.single('image'), async (req, res
         // Check if a new image has been uploaded
         if (req.file) {
             console.log('Uploaded File:', req.file);
-            const image = req.file.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
+            const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
+            console.log("image name:", image)
             updateData.image = image; // Update with the new image path
+            
             console.log("Image is included");
         } else {
             // If no new image is provided, keep the existing image path
@@ -211,7 +215,8 @@ router.post('/products', adminAuth, upload.single('image'), async (req, res) => 
 
     if (req.file) {
         console.log('Uploaded File:', req.file);
-        const image = req.file.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
+        const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
+        console.log("image name:", image)
         updateData.image = image; // Update with the new image path
         console.log("Image is included");
     } else {
@@ -298,7 +303,8 @@ router.put('/products/:id', adminAuth, upload.single('image'), async (req, res) 
 
         // Check if a new image has been uploaded
         if (req.file) {
-            const image = req.file.path.replace(/\\/g, '/'); // Replace backslashes with forward slashes
+            const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
+            console.log("image name:", image)
             updateData.image = image; // Update with the new image path
         } else {
             // Retain the old image if no new image is provided
@@ -421,7 +427,8 @@ const pdfStorage = multer.diskStorage({
         cb(null, uploadDir); // Use the 'uploads/test-results/' directory at the project root
     },
     filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name collisions
+        const fileName = `${Date.now()}-${file.originalname}`; // Use a timestamp to avoid name collisions
+        cb(null, fileName);
     }
 });
 
@@ -441,8 +448,8 @@ const uploadPDF = multer({
 });
 
 // Route to upload a test result (PDF) for a specific product in an order
-router.post('/orders/:orderId/product/:productOrderId/test-result',adminAuth, uploadPDF.single('testResult'), async (req, res) => {
-    console.log(req.body)
+router.post('/orders/:orderId/product/:productOrderId/test-result', adminAuth, uploadPDF.single('testResult'), async (req, res) => {
+    console.log(req.body);
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
@@ -453,22 +460,23 @@ router.post('/orders/:orderId/product/:productOrderId/test-result',adminAuth, up
         if (!req.file) return res.status(400).json({ message: 'Test result PDF file is required.' });
 
         // Get the uploaded file path
-        const testResultPath = req.file.path.replace(/\\/g, '/'); // Use forward slashes for consistency
-        console.log(testResultPath)
+        const testResultPath = `uploads/test-results/${req.file.filename}`; // Use relative path
+        console.log(testResultPath);
 
         const TestResult = {
             pdfLink: testResultPath
-        }
+        };
 
         // Update the user's order with the test result link for the specific product
         const response = await user.uploadTestResult(orderId, productOrderId, TestResult);
 
         res.status(200).json({ message: 'Test result uploaded successfully', testResultPath });
     } catch (error) {
-        console.log(error.message)
+        console.log(error.message);
         return res.status(500).json({ message: error.message });
     }
 });
+
 
 // Get all orders
 router.get('/orders',adminAuth, async (req, res) => {
