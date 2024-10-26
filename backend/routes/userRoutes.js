@@ -6,8 +6,10 @@ const Razorpay = require('razorpay');
 const { createRazorpayOrder } = require('../utils/razorpay');  
 const crypto = require('crypto');
 const path = require('path');
-
+const fs = require('fs')
+const url = require('url');
 const router = express.Router();
+const admin = require("firebase-admin");
 
 
 router.post('/start-payment',authenticateUser,  async (req, res) => {
@@ -168,6 +170,40 @@ router.post('/cart/remove', authenticateUser, async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 });
+
+
+
+// Remove entire product from cart
+router.post('/cart/removeproduct', authenticateUser, async (req, res) => {
+    console.log("removign entire prod from cart")
+    const { productId } = req.body;
+
+    if (!productId) {
+        return res.status(400).json({ message: 'Product ID is required.' });
+    }
+
+    try {
+        const user = req.user;
+
+        // Ensure the product exists in the cart before trying to remove it
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // Remove the entire product from the cart
+        user.cart = user.cart.filter(item => item.productId.toString() !== productId);
+        user.cartTotal = user.cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+        await user.save();
+
+        res.status(200).json({ message: 'Product removed from cart.', cart: user.cart, cartTotal: user.cartTotal });
+    } catch (error) {
+        console.error('Error removing product from cart:', error);
+        res.status(500).json({ message: 'Internal server error' });
+    }
+});
+
 
 // Get cart items
 router.get('/cart', authenticateUser, async (req, res) => {
@@ -332,20 +368,50 @@ router.get('/getOneProduct/:productId', async(req, res)=>{
     }
 })
 
+
+
+
+const bucket = admin.storage().bucket();
+
 router.get('/downloadresult', authenticateUser, async (req, res) => {
-    const filePath = req.query.filePath;
-    const absolutePath = path.resolve(filePath); // Get the absolute path
-  
-    console.log("req body:", req.query.filePath);
-    console.log("Resolved path:", absolutePath);
-  
-    res.download(absolutePath, 'testresult.pdf', (err) => {
-      if (err) {
-        // Handle error
-        console.error(err);
-        res.status(500).send('Error occurred while downloading the file');
-      }
-    });
-  });
+    const fileUrl = req.query.fileUrl;
+
+    if (!fileUrl) {
+        return res.status(400).json({ message: 'File URL is required.' });
+    }
+
+    try {
+        // Parse the file path from the URL
+        const parsedUrl = url.parse(fileUrl, true);
+        const filePath = decodeURIComponent(parsedUrl.pathname.replace(/^\/v0\/b\/[^/]+\/o\//, ''));
+        const fileName = filePath.split('/').pop();
+        const localTempPath = path.join(__dirname, fileName);
+
+        // Reference to the file in Firebase Storage
+        const file = bucket.file(filePath);
+
+        // Download the file to a temporary location on the server
+        await file.download({ destination: localTempPath });
+
+        // Set the response headers for downloading the file
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+        res.setHeader('Content-Type', 'application/pdf');
+
+        // Use res.sendFile to send the file to the client
+        res.sendFile(localTempPath, (err) => {
+            // Delete the file after sending it to the client
+            fs.unlink(localTempPath, (unlinkErr) => {
+                if (unlinkErr) console.error('Error deleting temporary file:', unlinkErr);
+            });
+            if (err) {
+                console.error('Error sending file:', err);
+                res.status(500).send('Error sending file');
+            }
+        });
+    } catch (error) {
+        console.error('Error downloading file:', error);
+        res.status(500).send('Error downloading file');
+    }
+});
   
 module.exports = router;

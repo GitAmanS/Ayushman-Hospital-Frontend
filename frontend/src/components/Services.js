@@ -18,7 +18,7 @@ const Services = () => {
   };
 
   return (
-    <div className="p-4 mt-20 md:px-40">
+    <div className="p-4 mt-20 min-h-96 md:px-40">
       <h1 className="text-2xl font-bold mb-4">Our Services</h1>
       
       {/* Category Filter Buttons */}

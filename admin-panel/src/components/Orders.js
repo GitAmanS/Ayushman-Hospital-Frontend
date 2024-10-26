@@ -55,12 +55,13 @@ export const OrderList = () => {
     );
 };
 
-const ProductActions = ({ productStatus, productId, orderId, userId }) => {
+const ProductActions = ({ productStatus, productId, orderId, userId, product }) => {
     const notify = useNotify();
     const refresh = useRefresh();
     const [scheduledDate, setScheduledDate] = useState('');
     const [showDateInput, setShowDateInput] = useState(false);
     const [file, setFile] = useState(null); // Add state for file input
+    const [showUploadInput, setShowUploadInput] = useState(false);
 
     const handleSchedule = async () => {
         if (scheduledDate) {
@@ -103,6 +104,20 @@ const ProductActions = ({ productStatus, productId, orderId, userId }) => {
         }
     };
 
+    const handleUpdateTestResult = () => {
+        setShowUploadInput(!showUploadInput);
+    };
+
+    const handleDeleteTestResult= async()=>{
+        try{
+            const response = await dataProvider.deleteTestResult(orderId, productId, product.testResults[0]._id, userId);
+            notify(`Test result deleted.`);
+            refresh();
+        }catch(err){
+            console.log(err)
+        }
+    }
+
     const toggleDateInput = () => {
         setShowDateInput(!showDateInput);
     };
@@ -138,8 +153,27 @@ const ProductActions = ({ productStatus, productId, orderId, userId }) => {
                     <Button label="Upload Test Result" onClick={handleUploadTestResult} />
                 </div>
             );
-        case 'completed':
-            return null;
+            case 'completed':
+                return (
+                    <div>
+                        <div className="flex gap-x-4">
+                        <Button label="Update Test Result" onClick={handleUpdateTestResult} variant="contained" color="primary" />
+                        <Button label="Delete Test Result" onClick={handleDeleteTestResult} variant="contained" color="error" />
+                        </div>
+    
+    
+                        {showUploadInput && (
+                            <div className="mt-2">
+                                <input
+                                    type="file"
+                                    onChange={(e) => setFile(e.target.files[0])}
+                                    accept=".pdf,.jpg,.png,.docx"
+                                />
+                                <Button label="Submit Test Result" onClick={handleUploadTestResult} />
+                            </div>
+                        )}
+                    </div>
+                );
         default:
             return null;
     }
@@ -227,18 +261,17 @@ export const OrderEdit = () => {
 
                                             {/* Test Results */}
                                             <TextField
-                                                source={`products[${index}].testResults`}
+                                                source={`products[${index}].testResults[0].pdfLink`}
                                                 disabled
                                                 label="Test Results"
                                                 className="w-full sm:w-auto flex-grow text-gray-800"
-                                                defaultValue={[...product.testResults]} // Set default value
                                             />
 
                                         </div>
 
                                         {/* Action buttons based on product status */}
                                         <div className="mt-4">
-                                            <ProductActions orderId={record.id} userId={record.userId} productStatus={product.productStatus} productId={product._id} />
+                                            <ProductActions orderId={record.id} userId={record.userId} productStatus={product.productStatus} productId={product._id} product={product} />
                                         </div>
                                     </div>
                                 ))}

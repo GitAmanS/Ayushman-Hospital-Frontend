@@ -10,28 +10,28 @@ const TestResultPage = () => {
   ) || [];
 
 
-  const handleDownloadResult = async (filePath) => {
+  const handleDownloadResult = async (pdfURL) => {
     try {
-      const response = await axios.get("/api/downloadresult", {
-        params: { filePath }, // Send filePath as query param
-        responseType: 'blob',
-        withCredentials: true, // Include cookies
-      });
-      // Handle response
-            // Create a URL for the downloaded file
-            const url = window.URL.createObjectURL(new Blob([response.data]));
+        const response = await axios.get("/api/downloadresult", {
+            params: { fileUrl: pdfURL }, // Ensure the query parameter matches your backend route
+            responseType: 'blob',        // Set response type to blob to handle binary data
+            withCredentials: true,       // Include cookies if needed
+        });
 
-            // Create a temporary <a> element to trigger the download
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', 'testresult.pdf');  // The filename that will be used to download
-            document.body.appendChild(link);
-            link.click();  // Programmatically click the <a> element to trigger the download
-            document.body.removeChild(link);  // Clean up
+        // Create a URL for the downloaded file
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        
+        // Create a temporary <a> element to trigger the download
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'testresult.pdf'); // Set the filename
+        document.body.appendChild(link);
+        link.click(); // Programmatically click the <a> element
+        document.body.removeChild(link); // Clean up the temporary <a> element
     } catch (err) {
-      console.error(err);
+        console.error('Error downloading file:', err);
     }
-  };
+};
   
 
   return (

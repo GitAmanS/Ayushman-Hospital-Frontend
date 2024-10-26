@@ -1,7 +1,9 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useDeferredValue } from 'react';
 import productData from '../items.json'; // Import your JSON file with product data
 import { useNavigate } from 'react-router-dom';
 import axios from "axios";
+import { ToastContainer, toast } from 'react-toastify';
+
 // Create the context
 export const UserContext = createContext();
 
@@ -55,13 +57,15 @@ export const UserProvider = ({ children }) => {
 
   const fetchCart = async()=>{
     try {
-    
-      const response = await axios.get('/api/cart', {
-        withCredentials: true, // Send cookies along with the request
-      });
-      console.log("cart recieved:",response.data.cart)
-      setCartProducts(response.data.cart)
-      setCartTotal(response.data.cartTotal)
+      if(user){
+        const response = await axios.get('/api/cart', {
+          withCredentials: true, // Send cookies along with the request
+        });
+        console.log("cart recieved:",response.data.cart)
+        setCartProducts(response.data.cart)
+        setCartTotal(response.data.cartTotal)
+      }
+
   
     } catch (error) {
       console.error('Error recieving cart:', error);
@@ -185,8 +189,20 @@ export const UserProvider = ({ children }) => {
           { productId, quantity: 1 },
           { withCredentials: true }
         );
-        setCartProducts(response.data.cart);
-        setCartTotal(response.data.cartTotal);
+  
+        if (response.data.cart !== cartProducts) { // Avoid unnecessary updates
+          setCartProducts(response.data.cart);
+          setCartTotal(response.data.cartTotal);
+          toast.success('Item added to cart', {
+            position: "bottom-center",
+            autoClose: 800, // Closes after 3 seconds
+            hideProgressBar: true,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+          });
+          
+        }
       } catch (error) {
         console.error('Error adding item to cart:', error);
       }
@@ -196,6 +212,7 @@ export const UserProvider = ({ children }) => {
         setLocalCart((prevCart) => {
           const existingProductIndex = prevCart.findIndex(item => item.productId === productId);
           let updatedCart;
+  
           if (existingProductIndex !== -1) {
             updatedCart = prevCart.map((item, index) =>
               index === existingProductIndex
@@ -205,15 +222,72 @@ export const UserProvider = ({ children }) => {
           } else {
             updatedCart = [...prevCart, { ...product.data, productId: product.data._id, quantity: 1 }];
           }
+  
           const updatedTotal = updatedCart.reduce((total, item) => total + (item.price * item.quantity), 0);
-          setCartTotal(updatedTotal);
+          if (updatedTotal !== cartTotal) {
+            setCartTotal(updatedTotal);
+            
+          }
+          
           return updatedCart;
+        });
+        toast.success('Item added to cart', {
+          position: "bottom-center",
+          autoClose: 800, // Closes after 3 seconds
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
         });
       } catch (err) {
         console.error('Error adding item to local cart:', err);
       }
     }
   };
+  
+
+
+  const removeProductFromCart = async (productId) => {
+    if (user) {
+        try {
+            const response = await axios.post(
+                '/api/cart/removeproduct',
+                { productId },
+                { withCredentials: true }
+            );
+
+            if (response.data.cart !== cartProducts) { // Avoid unnecessary updates
+                setCartProducts(response.data.cart);
+                setCartTotal(response.data.cartTotal);
+                toast.info('Product removed from cart', {
+                    position: "bottom-center",
+                    autoClose: 800,
+                    hideProgressBar: true,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                });
+            }
+        } catch (error) {
+            console.error('Error removing product from cart:', error);
+        }
+    } else {
+        setLocalCart((prevCart) => {
+            const updatedCart = prevCart.filter(item => item.productId !== productId);
+            const updatedTotal = updatedCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+            setCartTotal(updatedTotal);
+            toast.info('Product removed from cart', {
+                position: "bottom-center",
+                autoClose: 3000,
+                hideProgressBar: true,
+                closeOnClick: true,
+                pauseOnHover: true,
+                draggable: true,
+            });
+            return updatedCart;
+        });
+    }
+};
 
   const decreaseItemQuantity = async (productId) => {
     if (user) {
@@ -223,8 +297,19 @@ export const UserProvider = ({ children }) => {
           { productId, quantity: 1 },
           { withCredentials: true }
         );
-        setCartProducts(response.data.cart);
-        setCartTotal(response.data.cartTotal);
+  
+        if (response.data.cart !== cartProducts) { // Avoid unnecessary updates
+          setCartProducts(response.data.cart);
+          setCartTotal(response.data.cartTotal);
+        }
+        toast.info('Product removed from cart', {
+          position: "bottom-center",
+          autoClose: 800,
+          hideProgressBar: true,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+      });
       } catch (error) {
         console.error('Error decreasing item quantity in cart:', error);
       }
@@ -234,6 +319,7 @@ export const UserProvider = ({ children }) => {
         if (existingProductIndex !== -1) {
           const existingProduct = prevCart[existingProductIndex];
           let updatedCart;
+  
           if (existingProduct.quantity > 1) {
             updatedCart = prevCart.map((item, index) =>
               index === existingProductIndex
@@ -243,15 +329,21 @@ export const UserProvider = ({ children }) => {
           } else {
             updatedCart = prevCart.filter((item) => item.productId !== productId);
           }
+  
           const updatedTotal = updatedCart.reduce((total, item) => total + (item.price * item.quantity), 0);
-          setCartTotal(updatedTotal);
+          if (updatedTotal !== cartTotal) {
+            setCartTotal(updatedTotal);
+            
+          }
+          
           return updatedCart;
         }
+        
+
         return prevCart;
       });
     }
   };
-
   const clearCart = async () => {
     if (user) {
       try {
@@ -277,7 +369,11 @@ export const UserProvider = ({ children }) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ phone }),
     });
-    console.log(await response.json());
+
+    const responseJson = await response.json();
+    console.log(responseJson.otp);
+    alert(`Your OTP is: ${responseJson.otp}`);
+    
   };
 
   const submitEmailF = async (email) => {
@@ -351,7 +447,7 @@ const verifyOtp = async (phoneNumber, otp) => {
 
   return (
     <UserContext.Provider
-      value={{addresses,fetchCart,localCart,fetchOrders,  setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
+      value={{addresses,fetchCart, removeProductFromCart, localCart,fetchOrders,  setAddresses, selectedAddress, setSelectedAddress,  isNewUser,orders, clearOrders ,setOrders, cartTotal,categories,clearCart, setIsNewUser, user, setIsOtpVerified, isOtpVerified, requestOtp, verifyOtp, submitEmailF, logout, cartProducts, addItemToCart, decreaseItemQuantity }}
     >
       {children}
     </UserContext.Provider>

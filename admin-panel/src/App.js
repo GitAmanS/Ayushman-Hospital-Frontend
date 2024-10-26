@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Admin, Resource, ListGuesser, EditGuesser, ShowGuesser } from "react-admin";
+import { Admin, Resource, ListGuesser,AppBar, Layout, EditGuesser, ShowGuesser,TopToolbar,Button } from "react-admin";
 import axios from "axios";
 import { SimpleForm, TextInput, ImageInput, ImageField } from 'react-admin';
 import { CategoryEdit, CategoryList,CreateCategory } from "./components/Category";
@@ -10,12 +10,34 @@ import { dataProvider } from "./components/dataProvider";
 import { AdminList , AdminEdit, AdminCreate} from "./components/Admins";
 import authProvider from "./components/authProvider";
 import RoleProtectedResource from "./components/RoleProtectedResource";
-import { BrowserRouter, useLocation } from 'react-router-dom';
+import { BrowserRouter, useLocation, useNavigate } from 'react-router-dom';
+import { Box, Typography } from '@mui/material';
 
 
 // API URL
 const apiUrl = "http://localhost:5000/api/admin"; // Update with your backend URL
 
+
+
+// Custom AppBar with aligned Back Button
+const CustomAppBar = (props) => {
+  const navigate = useNavigate();
+
+  return (
+    <AppBar {...props}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+        <Button onClick={() => navigate(-1)} label="Back" color="inherit" />
+        <Typography variant="h6" color="inherit" sx={{ flexGrow: 1, textAlign: 'center' }}>
+          {props.title}
+        </Typography>
+        <Box>{props.children}</Box>
+      </Box>
+    </AppBar>
+  );
+};
+
+// Custom Layout including the custom AppBar
+const CustomLayout = (props) => <Layout {...props} appBar={CustomAppBar} />;
 
 
 // Main App Component
@@ -55,7 +77,10 @@ const App = () => {
   }, [location]); // Empty array ensures this runs once on mount
   return (
     
-          <Admin authProvider={authProvider} dataProvider={dataProvider}>
+      <Admin authProvider={authProvider} dataProvider={dataProvider} layout={CustomLayout}>
+        <TopToolbar>
+          <Button  label="Back" />
+        </TopToolbar>
       <Resource name="categories" list={CategoryList} create={CreateCategory} edit={CategoryEdit} />
       <Resource name="products" list={ProductList} create={ProductCreate} edit={ProductEdit} />
       <Resource name="orders"   list={OrderList} edit={OrderEdit}/>

@@ -352,6 +352,69 @@ userSchema.methods.uploadTestResult = async function (orderId, productOrderId, t
     };
 };
 
+
+
+// Method to update a test result for a product in an order
+userSchema.methods.updateTestResult = async function (orderId, productOrderId, testResultId, updatedTestResult) {
+    const order = this.orders.id(orderId);
+    if (!order) throw new Error('Order not found.');
+
+    const product = order.products.id(productOrderId);
+    if (!product) throw new Error('Product not found in this order.');
+
+    const testResult = product.testResults.id(testResultId);
+    if (!testResult) throw new Error('Test result not found.');
+
+    // Update test result fields
+    if (updatedTestResult.date) testResult.date = updatedTestResult.date;
+    if (updatedTestResult.pdfLink) testResult.pdfLink = updatedTestResult.pdfLink;
+
+    await this.save();
+
+    return {
+        message: 'Test result updated successfully.',
+        testResult,
+    };
+};
+
+
+
+// Method to delete a test result for a product in an order
+userSchema.methods.deleteTestResult = async function (orderId, productOrderId, testResultId) {
+    const order = this.orders.id(orderId);
+    if (!order) throw new Error('Order not found.');
+
+    const product = order.products.id(productOrderId);
+    if (!product) throw new Error('Product not found in this order.');
+
+    // Find the index of the test result to delete
+    const testResultIndex = product.testResults.findIndex(tr => tr._id.toString() === testResultId.toString());
+    if (testResultIndex === -1) throw new Error('Test result not found.');
+
+    // Remove the test result from the product
+    product.testResults.splice(testResultIndex, 1);
+
+    // Check if there are any remaining test results for the product
+    if (product.testResults.length === 0) {
+        product.productStatus = 'processing'; // Change status back to processing if no test results are left
+    }
+
+    // Check if any products are still in the processing state
+    const anyProductInProcessing = order.products.some(p => p.productStatus === 'processing');
+    if (!anyProductInProcessing) {
+        order.orderStatus = 'processing'; // If no products are marked as completed, set the order status back to processing
+    }
+
+    await this.save();
+
+    return {
+        message: 'Test result deleted successfully.',
+        orderStatus: order.orderStatus,
+        product,
+    };
+};
+
+
 const User = mongoose.model('User', userSchema);
 const Order = mongoose.model('Order', orderSchema)
 

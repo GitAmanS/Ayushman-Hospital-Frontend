@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserContext } from './Context/UserContext';
 import { IoMdArrowRoundBack } from "react-icons/io";
@@ -7,12 +7,16 @@ import AddressSlidingSection from './slidingSections/AddressSlidingSection';
 import LoginSlidingSection from './slidingSections/LoginSlidingSection';
 
 const Cart = () => {
-  const { cartProducts, user, clearCart, localCart, fetchCart, setAddresses, cartTotal, selectedAddress, setSelectedAddress, addItemToCart, decreaseItemQuantity } = useContext(UserContext);
+  const { cartProducts, user, clearCart, localCart, fetchCart,removeProductFromCart, setAddresses, cartTotal, selectedAddress, setSelectedAddress, addItemToCart, decreaseItemQuantity } = useContext(UserContext);
   
   let currentCart = user ? cartProducts : localCart; // Use localCart if user is not logged in
   const navigate = useNavigate();
   const [isAddressSlideOpen, setIsAddressSlideOpen] = useState(false);
   const [isLoginSlideOpen, setIsLoginSlideOpen] = useState(false);
+
+  useEffect(()=>{
+    fetchCart();
+  }, [])
 
   // Toggle the sliding sections
   const handleContinueClick = () => {
@@ -92,22 +96,41 @@ const Cart = () => {
             <h1 className="font-bold pb-2">Tests added</h1>
             <button onClick={clearCart}>Clear Cart</button>
             {currentCart.map((item) => (
-              <div key={item.productId} className="flex flex-row py-2">
-                <img src={item.image} className="h-10 w-10 object-cover rounded-lg" />
-                <div className="flex px-2 flex-col gap-1 justify-start">
-                  <h3 className="font-bold text-sm">{item.title}</h3>
-                  <p className="text-base"> ₹{item.price * item.quantity}</p>
-                </div>
-                <div className="flex flex-col items-center ml-auto">
-                  <div className="flex flex-row border ml-auto h-fit text-red-400 font-bold rounded">
-                    <button onClick={() => decreaseItemQuantity(item.productId)} className="px-3 py-1 hover:bg-gray-200">-</button>
-                    <span className="px-3 py-1">{item.quantity}</span>
-                    <button onClick={() => addItemToCart(item.productId)} className="px-3 py-1 hover:bg-gray-200">+</button>
-                  </div>
-                  <h1 className="text-xs text-gray-500">Patient(s)</h1>
-                </div>
-              </div>
-            ))}
+
+  <div key={item.productId} className="flex flex-col py-2">
+    <div className='flex flex-row py-2'>
+      <img src={item.image} className="h-10 w-10 object-cover rounded-lg" />
+
+    <div className="flex px-2 flex-col gap-1 justify-start">
+      <h3 className="font-bold text-sm">{item.title}</h3>
+      <p className="text-base"> ₹{item.price * item.quantity}</p>
+    </div>
+
+    <div className="flex flex-col items-center ml-auto">
+      
+      <div className="flex flex-row border ml-auto h-fit text-red-400 font-bold rounded">
+        <button onClick={() => decreaseItemQuantity(item.productId)} className="px-3 py-1 hover:bg-gray-200">-</button>
+        <span className="px-3 py-1">{item.quantity}</span>
+        <button onClick={() => addItemToCart(item.productId)} className="px-3 py-1 hover:bg-gray-200">+</button>
+      </div>
+      <h1 className="text-xs text-gray-500">Patient(s)</h1>
+      
+    </div>
+    </div>
+    
+
+        {/* Remove button */}
+        <button
+          onClick={() => removeProductFromCart(item.productId)}
+          className="py-2 w-full border border-gray-300 text-red-600 font-semibold hover:bg-gray-100 rounded"
+        >
+      Remove
+    </button>
+    
+
+  </div>
+))}
+
           </div>
         ) : (
           <div className="flex flex-col items-center md:px-36">

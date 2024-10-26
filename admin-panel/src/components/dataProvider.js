@@ -170,6 +170,21 @@ export const dataProvider = {
             },
         });
         return { data };
+
+    },
+
+      // Custom methods for uploading test results and updating product status
+      deleteTestResult: async (orderId, productOrderId, testResultId,userId) => {
+        console.log("this is uploadTestResults")
+        // const formData = new FormData();
+        // formData.append('testResult', testResult);
+        const { data } = await axios.delete(`${apiUrl}/orders/${orderId}/product/${productOrderId}/test-result/${testResultId}/${userId}`, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
+        return { data };
+        
     },
   
   };

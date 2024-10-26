@@ -8,26 +8,24 @@ const {User, Order} = require('../models/User'); // Import User model
 const adminAuth = require('../middleware/adminAuth'); // Middleware for admin authentication
 const jwt = require('jsonwebtoken'); // For generating JWT
 const mongoose = require('mongoose');
+const admin = require('firebase-admin');
 
 const router = express.Router();
 
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.resolve('uploads/'); // Ensure the 'uploads/' directory is at the project root
-
-        // Check if 'uploads/' directory exists, if not, create it
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true }); // Create the 'uploads' directory if it doesn't exist
-        }
-
-        cb(null, uploadDir); // Use the 'uploads/' directory at the project root
-    },
-    filename: (req, file, cb) => {
-        cb(null, `${Date.now()}-${file.originalname}`); // Use a timestamp to avoid name collisions
-    }
+// Initialize Firebase Admin
+admin.initializeApp({
+    credential: admin.credential.cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'), // Replace escaped newlines
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    }),
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET, // e.g., my-project.appspot.com
 });
 
-const upload = multer({ storage });
+const bucket = admin.storage().bucket();
+
+// Setup multer for handling image uploads
+const upload = multer({ storage: multer.memoryStorage() }); // Use memory storage for Firebase uploads
 
 // Route for admin login
 router.post('/login', async (req, res) => {
@@ -66,23 +64,70 @@ router.post('/login', async (req, res) => {
 
 // Route to create a new category
 router.post('/categories', adminAuth, upload.single('image'), async (req, res) => {
-    const { name, description } = req.body; // Include description
-    const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
+    const { name, description } = req.body;
 
-    if (!image) {
+    // Check if an image file was uploaded
+    if (!req.file) {
         return res.status(400).json({ message: 'Image file is required' });
     }
 
-    console.log("image:",image)
+    console.log("Uploading image..."); // Debug log
 
-    const category = new Category({ name, description, image }); // Include description in the category
-    try {
-        await category.save();
-        res.status(201).json({...category, id: category._id });
-    } catch (err) {
-        res.status(500).json({ message: 'Error creating category', error: err });
-    }
+    // Construct file name for Firebase storage
+    const fileName = `categories/${Date.now()}_${req.file.originalname}`;
+    const file = bucket.file(fileName);  // Ensure we are using the correct file name without "gs://"
+
+    // Create a writable stream to upload the file
+    const blobStream = file.createWriteStream({
+        metadata: {
+            contentType: req.file.mimetype,
+            metadata: {
+                firebaseStorageDownloadTokens: Date.now().toString() // Generate a simple token
+            }
+        }
+    });
+
+    // Handle errors during upload
+    blobStream.on('error', (error) => {
+        console.error("Error during upload:", error); // Debug log
+        return res.status(500).json({ message: 'Error uploading image', error });
+    });
+
+    // Handle successful upload
+    blobStream.on('finish', async () => {
+        try {
+            // Retrieve the metadata to get the download token
+            const [metadata] = await file.getMetadata();
+            const downloadToken = metadata.metadata.firebaseStorageDownloadTokens;
+
+            // Clean the bucket name if it contains "gs://"
+            let sanitizedBucketName = process.env.FIREBASE_STORAGE_BUCKET;
+            if (sanitizedBucketName.startsWith('gs://')) {
+                sanitizedBucketName = sanitizedBucketName.replace('gs://', '');
+            }
+
+            // Correctly construct the image URL (no gs:// prefix)
+            const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${sanitizedBucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+            console.log("Image uploaded successfully. URL:", imageUrl); // Debug log
+
+            // Create a new category with the image URL
+            const category = new Category({ name, description, image: imageUrl });
+            await category.save();
+            console.log("Category created successfully:", category); // Debug log
+            res.status(201).json({ ...category.toObject(), id: category._id });
+        } catch (err) {
+            console.error("Error creating category:", err); // Debug log
+            res.status(500).json({ message: 'Error creating category', error: err });
+        }
+    });
+
+    // End the stream to trigger the upload
+    blobStream.end(req.file.buffer);
 });
+
+
+
 
 
 // Route to get all categories
@@ -129,21 +174,72 @@ router.put('/categories/:id', adminAuth, upload.single('image'), async (req, res
         // Check if a new image has been uploaded
         if (req.file) {
             console.log('Uploaded File:', req.file);
-            const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
-            console.log("image name:", image)
-            updateData.image = image; // Update with the new image path
-            
-            console.log("Image is included");
+
+            // Generate a unique file name and upload to Firebase Storage
+            const fileName = `categories/${Date.now()}_${req.file.originalname}`;
+            const file = bucket.file(fileName);
+
+            // Create a writable stream to upload the file
+            const blobStream = file.createWriteStream({
+                metadata: {
+                    contentType: req.file.mimetype,
+                    metadata: {
+                        firebaseStorageDownloadTokens: Date.now().toString() // Generate a token
+                    }
+                }
+            });
+
+            // Handle errors during the upload
+            blobStream.on('error', (error) => {
+                console.error("Error during upload:", error); // Debug log
+                return res.status(500).json({ message: 'Error uploading image', error });
+            });
+
+            // Handle successful upload
+            blobStream.on('finish', async () => {
+                try {
+                    // Retrieve the metadata to get the download token
+                    const [metadata] = await file.getMetadata();
+                    const downloadToken = metadata.metadata.firebaseStorageDownloadTokens;
+
+                    // Sanitize the bucket name (remove "gs://" if present)
+                    let sanitizedBucketName = process.env.FIREBASE_STORAGE_BUCKET;
+                    if (sanitizedBucketName.startsWith('gs://')) {
+                        sanitizedBucketName = sanitizedBucketName.replace('gs://', '');
+                    }
+
+                    // Construct the image URL (no "gs://" prefix)
+                    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${sanitizedBucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+                    console.log("Image uploaded successfully. URL:", imageUrl); // Debug log
+
+                    // Update the category with the new image URL
+                    updateData.image = imageUrl;
+
+                    // Update the category in MongoDB
+                    const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true });
+                    res.status(200).json({ ...updatedCategory.toObject(), id: updatedCategory._id.toString() });
+                } catch (err) {
+                    console.error("Error during updating category with image:", err); // Debug log
+                    res.status(500).json({ message: 'Error updating category', error: err });
+                }
+            });
+
+            // End the stream to trigger the upload
+            blobStream.end(req.file.buffer);
+
         } else {
-            // If no new image is provided, keep the existing image path
+            // If no new image is provided, keep the existing image
             console.log('No image included');
-            updateData.image = existingCategory.image; // Retain the old image
+            updateData.image = existingCategory.image;
+
+            // Update the category in MongoDB
+            const updatedCategory = await Category.findByIdAndUpdate(id, updateData, { new: true });
+            res.status(200).json({ ...updatedCategory.toObject(), id: updatedCategory._id.toString() });
         }
 
-        // Update the category with the new data
-        const category = await Category.findByIdAndUpdate(id, updateData, { new: true });
-        res.status(200).json({ ...category.toObject(), id: category._id.toString() }); // Send the updated category data
     } catch (err) {
+        console.error("Error updating category:", err); // Debug log
         res.status(500).json({ message: 'Error updating category', error: err });
     }
 });
@@ -210,28 +306,76 @@ router.delete('/categories', adminAuth, async (req, res) => {
 router.post('/products', adminAuth, upload.single('image'), async (req, res) => {
     const { title, desc, categories, reports_within, contains_tests, price } = req.body;
     
-    const updateData = { title, desc, category:categories, reports_within, contains_tests,price };
-    console.log("updateDate:", updateData)
+    const updateData = { title, desc, category: categories, reports_within, contains_tests, price };
+    console.log("updateData:", updateData);
 
-    if (req.file) {
-        console.log('Uploaded File:', req.file);
-        const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
-        console.log("image name:", image)
-        updateData.image = image; // Update with the new image path
-        console.log("Image is included");
-    } else {
-        // If no new image is provided, keep the existing image path
-        console.log('No image included');
+    // Check if an image file was uploaded
+    if (!req.file) {
         return res.status(400).json({ message: 'Image file is required' });
     }
-    const product = new Product(updateData);
+
     try {
-        await product.save();
-        res.status(201).json({ ...product, id: product._id });
+        // Generate a unique file name and upload to Firebase Storage
+        const fileName = `products/${Date.now()}_${req.file.originalname}`;
+        const file = bucket.file(fileName);
+
+        // Create a writable stream to upload the file
+        const blobStream = file.createWriteStream({
+            metadata: {
+                contentType: req.file.mimetype,
+                metadata: {
+                    firebaseStorageDownloadTokens: Date.now().toString() // Generate a token
+                }
+            }
+        });
+
+        // Handle errors during the upload
+        blobStream.on('error', (error) => {
+            console.error("Error during upload:", error); // Debug log
+            return res.status(500).json({ message: 'Error uploading image', error });
+        });
+
+        // Handle successful upload
+        blobStream.on('finish', async () => {
+            try {
+                // Retrieve the metadata to get the download token
+                const [metadata] = await file.getMetadata();
+                const downloadToken = metadata.metadata.firebaseStorageDownloadTokens;
+
+                // Sanitize the bucket name (remove "gs://" if present)
+                let sanitizedBucketName = process.env.FIREBASE_STORAGE_BUCKET;
+                if (sanitizedBucketName.startsWith('gs://')) {
+                    sanitizedBucketName = sanitizedBucketName.replace('gs://', '');
+                }
+
+                // Construct the image URL (no "gs://" prefix)
+                const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${sanitizedBucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+                console.log("Image uploaded successfully. URL:", imageUrl); // Debug log
+
+                // Add the image URL to the update data
+                updateData.image = imageUrl;
+
+                // Create a new product with the image URL
+                const product = new Product(updateData);
+                await product.save();
+
+                res.status(201).json({ ...product.toObject(), id: product._id });
+            } catch (err) {
+                console.error("Error creating product:", err); // Debug log
+                res.status(500).json({ message: 'Error creating product', error: err });
+            }
+        });
+
+        // End the stream to trigger the upload
+        blobStream.end(req.file.buffer);
+
     } catch (err) {
+        console.error("Error during product creation:", err); // Debug log
         res.status(500).json({ message: 'Error creating product', error: err });
     }
 });
+
 
 // Route to get all products
 router.get('/products', adminAuth, async (req, res) => {
@@ -289,9 +433,9 @@ router.put('/products/:id', adminAuth, upload.single('image'), async (req, res) 
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // Build the updateData object by checking each field
+        // Build the updateData object with the new values or retain the old ones
         const updateData = {
-            title: title || existingProduct.title, // If title is missing, keep the existing one
+            title: title || existingProduct.title,
             desc: desc || existingProduct.desc,
             category: category || existingProduct.category,
             reports_within: reports_within || existingProduct.reports_within,
@@ -299,33 +443,86 @@ router.put('/products/:id', adminAuth, upload.single('image'), async (req, res) 
             price: price || existingProduct.price,
         };
 
-        console.log("updated product:", updateData)
-
         // Check if a new image has been uploaded
         if (req.file) {
-            const image = req.file ? `uploads/${req.file.filename}` : null; // Replace backslashes with forward slashes
-            console.log("image name:", image)
-            updateData.image = image; // Update with the new image path
+            const fileName = `products/${Date.now()}_${req.file.originalname}`;
+            const file = bucket.file(fileName);
+
+            // Create a writable stream to upload the file
+            const blobStream = file.createWriteStream({
+                metadata: {
+                    contentType: req.file.mimetype,
+                    metadata: {
+                        firebaseStorageDownloadTokens: Date.now().toString() // Generate a token
+                    }
+                }
+            });
+
+            // Handle errors during the upload
+            blobStream.on('error', (error) => {
+                console.error("Error during upload:", error); // Debug log
+                return res.status(500).json({ message: 'Error uploading image', error });
+            });
+
+            // Handle successful upload
+            blobStream.on('finish', async () => {
+                try {
+                    // Retrieve the metadata to get the download token
+                    const [metadata] = await file.getMetadata();
+                    const downloadToken = metadata.metadata.firebaseStorageDownloadTokens;
+
+                    // Sanitize the bucket name (remove "gs://" if present)
+                    let sanitizedBucketName = process.env.FIREBASE_STORAGE_BUCKET;
+                    if (sanitizedBucketName.startsWith('gs://')) {
+                        sanitizedBucketName = sanitizedBucketName.replace('gs://', '');
+                    }
+
+                    // Construct the image URL
+                    const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${sanitizedBucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+                    console.log("Image uploaded successfully. URL:", imageUrl); // Debug log
+
+                    // Update the product's image with the new URL
+                    updateData.image = imageUrl;
+
+                    // Update the product in the database
+                    const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+
+                    // Find the category name (if exists) to include it in the response
+                    const categoryData = await Category.findById(updatedProduct.category);
+                    const productWithCategoryName = {
+                        ...updatedProduct.toObject(),
+                        id: updatedProduct._id,
+                        categoryName: categoryData ? categoryData.name : 'Unknown',
+                    };
+
+                    res.status(200).json(productWithCategoryName);
+                } catch (err) {
+                    console.error("Error updating product:", err); // Debug log
+                    res.status(500).json({ message: 'Error updating product', error: err });
+                }
+            });
+
+            // End the stream to trigger the upload
+            blobStream.end(req.file.buffer);
+
         } else {
-            // Retain the old image if no new image is provided
+            // Retain the old image if no new image is uploaded
             updateData.image = existingProduct.image;
+
+            // Update the product in the database
+            const updatedProduct = await Product.findByIdAndUpdate(id, updateData, { new: true });
+
+            // Find the category name (if exists) to include it in the response
+            const categoryData = await Category.findById(updatedProduct.category);
+            const productWithCategoryName = {
+                ...updatedProduct.toObject(),
+                id: updatedProduct._id,
+                categoryName: categoryData ? categoryData.name : 'Unknown',
+            };
+
+            res.status(200).json(productWithCategoryName);
         }
-
-        // Update the product in the database
-        const product = await Product.findByIdAndUpdate(id, updateData, { new: true });
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
-        }
-
-        // Find the category name (if exists) to include it in the response
-        const categoryData = await Category.findById(product.category);
-        const productWithCategoryName = {
-            ...product.toObject(),
-            id: product._id,
-            categoryName: categoryData ? categoryData.name : 'Unknown',
-        };
-
-        res.status(200).json(productWithCategoryName);
     } catch (err) {
         console.error("Error updating product:", err);
         res.status(500).json({ message: 'Error updating product', error: err });
@@ -414,68 +611,126 @@ router.put('/orders/:orderId/product/:productOrderId/process', async (req, res) 
 
 
 
-// Update multer to accept PDF uploads
-const pdfStorage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadDir = path.resolve('uploads/test-results/'); // Ensure 'uploads/test-results/' is at the project root
 
-        // Check if 'uploads/test-results/' directory exists, if not, create it
-        if (!fs.existsSync(uploadDir)) {
-            fs.mkdirSync(uploadDir, { recursive: true }); // Create the 'uploads/test-results' directory if it doesn't exist
+
+// Configure multer to handle PDF file as buffer instead of storing on disk
+const uploadPDF = multer({
+    storage: multer.memoryStorage(), // Use memory storage instead of disk storage
+    fileFilter: (req, file, cb) => {
+        if (file.mimetype === 'application/pdf') {
+            cb(null, true);
+        } else {
+            cb(new Error('Only PDFs are allowed'), false);
         }
-
-        cb(null, uploadDir); // Use the 'uploads/test-results/' directory at the project root
-    },
-    filename: (req, file, cb) => {
-        const fileName = `${Date.now()}-${file.originalname}`; // Use a timestamp to avoid name collisions
-        cb(null, fileName);
     }
 });
 
-// Filter to accept only PDF files
-const pdfFilter = (req, file, cb) => {
-    if (file.mimetype === 'application/pdf') {
-        cb(null, true);
-    } else {
-        cb(new Error('Only PDFs are allowed'), false);
-    }
-};
-
-// Set up multer to use the PDF storage and filter
-const uploadPDF = multer({ 
-    storage: pdfStorage,
-    fileFilter: pdfFilter
-});
-
-// Route to upload a test result (PDF) for a specific product in an order
+// Route to upload or update a test result (PDF) for a specific product in an order
 router.post('/orders/:orderId/product/:productOrderId/test-result', adminAuth, uploadPDF.single('testResult'), async (req, res) => {
-    console.log(req.body);
     const { userId } = req.body; // Assume userId is sent in the request body
     const { orderId, productOrderId } = req.params;
 
     try {
         const user = await User.findById(userId);
         if (!user) return res.status(404).json({ message: 'User not found.' });
-
         if (!req.file) return res.status(400).json({ message: 'Test result PDF file is required.' });
 
-        // Get the uploaded file path
-        const testResultPath = `uploads/test-results/${req.file.filename}`; // Use relative path
-        console.log(testResultPath);
+        // Upload PDF to Firebase Storage
+        const fileName = `test-results/${Date.now()}_${req.file.originalname}`;
+        const file = bucket.file(fileName);
 
-        const TestResult = {
-            pdfLink: testResultPath
-        };
+        const blobStream = file.createWriteStream({
+            metadata: {
+                contentType: req.file.mimetype,
+                metadata: {
+                    firebaseStorageDownloadTokens: Date.now().toString(), // Token for secure access
+                }
+            }
+        });
 
-        // Update the user's order with the test result link for the specific product
-        const response = await user.uploadTestResult(orderId, productOrderId, TestResult);
+        // Handle errors during upload
+        blobStream.on('error', (error) => {
+            console.error("Error during PDF upload:", error);
+            return res.status(500).json({ message: 'Error uploading PDF', error });
+        });
 
-        res.status(200).json({ message: 'Test result uploaded successfully', testResultPath });
+        // Handle successful upload
+        blobStream.on('finish', async () => {
+            try {
+                const [metadata] = await file.getMetadata();
+                const downloadToken = metadata.metadata.firebaseStorageDownloadTokens;
+
+                let sanitizedBucketName = process.env.FIREBASE_STORAGE_BUCKET;
+                if (sanitizedBucketName.startsWith('gs://')) {
+                    sanitizedBucketName = sanitizedBucketName.replace('gs://', '');
+                }
+
+                const pdfUrl = `https://firebasestorage.googleapis.com/v0/b/${sanitizedBucketName}/o/${encodeURIComponent(fileName)}?alt=media&token=${downloadToken}`;
+
+                console.log("PDF uploaded successfully. URL:", pdfUrl);
+
+                // Check if the test result already exists
+                const order = user.orders.id(orderId); // Get the specific order by ID
+                if (!order) return res.status(404).json({ message: 'Order not found.' });
+
+                const product = order.products.id(productOrderId); // Get the specific product by ID
+                if (!product) return res.status(404).json({ message: 'Product not found in the order.' });
+
+                // If a test result already exists, update it; otherwise, create a new one
+                if (product.testResults && product.testResults.length > 0) {
+                    product.testResults[0].pdfLink = pdfUrl; // Update existing test result
+                } else {
+                    product.testResults = [{ pdfLink: pdfUrl }]; // Add new test result
+                }
+
+                // Save the user document with the updated test result
+                await user.save();
+
+                res.status(200).json({ message: 'Test result uploaded successfully', pdfUrl });
+            } catch (error) {
+                console.error("Error updating user's test result:", error);
+                return res.status(500).json({ message: 'Error updating test result', error });
+            }
+        });
+
+        // End the stream and start the upload process
+        blobStream.end(req.file.buffer);
+
     } catch (error) {
-        console.log(error.message);
+        console.log("Error:", error.message);
         return res.status(500).json({ message: error.message });
     }
 });
+
+
+
+
+
+
+
+
+// Route to delete a test result for a specific product in an order
+router.delete('/orders/:orderId/product/:productOrderId/test-result/:testResultId/:userId', adminAuth, async (req, res) => {
+     // Assume userId is sent in the request body
+    const { orderId, productOrderId, testResultId, userId } = req.params;
+
+    console.log("req.body:", req.body)
+
+    console.log("this is being hit")
+    try {
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found.' });
+
+        const response = await user.deleteTestResult(orderId, productOrderId, testResultId);
+        
+        res.status(200).json(response); // This response will contain the message and updated statuses
+
+    } catch (error) {
+        console.log("Error:", error.message);
+        return res.status(500).json({ message: error.message });
+    }
+});
+
 
 
 // Get all orders
