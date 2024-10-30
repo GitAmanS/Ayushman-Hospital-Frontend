@@ -19,7 +19,7 @@ const CategoryProducts = () => {
   }
 
   return (
-    <div className="flex flex-col p-4 pt-24 md:px-40">
+    <div className="flex flex-col  p-4 pt-24 md:px-40">
       <h1 className="text-xl font-semibold pb-2">{category.category} Products</h1>
       {/* Display the products for the selected category */}
       <div className="">
@@ -33,7 +33,7 @@ const CategoryProducts = () => {
               {/* Set the image to a wide rectangle (4:3 ratio) */}
               <div className="w-full h-48 md:h-60" onClick={() => handleProductClick(product._id)}>
                 <img
-                  src={`/${product.image}`}
+                  src={product.image}
                   alt={product.title}
                   className="w-full h-full object-cover rounded-md"
                 />
